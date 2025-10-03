@@ -1,0 +1,292 @@
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+  color: #0f172a;
+  background-color: #ffffff;
+}
+
+/* Header */
+.site-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: #0f172a;
+  color: #fff;
+}
+
+.site-header .logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.nav ul {
+  list-style: none;
+  display: flex;
+  gap: 1.5rem;
+}
+
+.nav a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.nav a:hover {
+  color: #f59e0b;
+}
+
+/* Hero Section */
+.hero {
+  background: url("https://via.placeholder.com/1200x500") center/cover no-repeat;
+  color: #fff;
+  text-align: center;
+  padding: 6rem 2rem;
+}
+
+.hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.hero p {
+  margin-bottom: 2rem;
+}
+
+.btn-primary {
+  background: #f59e0b;
+  color: #fff;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: background 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: #d97706;
+}
+
+/* Features Section */
+.features {
+  display: flex;
+  gap: 2rem;
+  padding: 4rem 2rem;
+  text-align: center;
+  background: #eef2f6;
+}
+
+.features .feature {
+  flex: 1;
+}
+
+/* Primary Content */
+.primary-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  padding: 4rem 2rem;
+  align-items: center;
+}
+
+.primary-content img {
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+.content-text {
+  flex: 1;
+}
+
+/* Secondary Content */
+.secondary-content {
+  display: flex;
+  gap: 2rem;
+  padding: 4rem 2rem;
+  justify-content: center;
+  background: #eef2f6;
+}
+
+.card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  padding: 1rem;
+  max-width: 300px;
+  text-align: center;
+}
+
+.card img {
+  max-width: 100%;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+/* CTA Section */
+.cta {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: #fde68a;
+}
+
+.cta h2 {
+  margin-bottom: 1.5rem;
+}
+
+.btn-secondary {
+  background: #0f172a;
+  color: #fff;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: background 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: #1e293b;
+}
+
+/* Footer */
+.site-footer {
+  background: #0f172a;
+  color: #fff;
+  padding: 2rem;
+}
+
+.footer-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: space-between;
+}
+
+.footer-content h4 {
+  margin-bottom: 0.5rem;
+}
+
+.footer-content ul {
+  list-style: none;
+}
+
+.footer-content ul li {
+  margin-bottom: 0.5rem;
+}
+
+.footer-content ul li a {
+  color: #f59e0b;
+  text-decoration: none;
+}
+
+.footer-content ul li a:hover {
+  text-decoration: underline;
+}
+
+.copyright {
+  text-align: center;
+  margin-top: 2rem;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .features, 
+  .secondary-content, 
+  .primary-content, 
+  .footer-content {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+/* Login & Dashboard Styles */
+.login-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #eef2f6;
+}
+
+.login-box {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  width: 350px;
+}
+
+.login-box h2 {
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.login-box label {
+  display: block;
+  margin-top: 1rem;
+  font-weight: bold;
+}
+
+.login-box input,
+.login-box select {
+  width: 100%;
+  padding: 0.7rem;
+  margin-top: 0.3rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.login-box button {
+  margin-top: 1.5rem;
+  width: 100%;
+  padding: 0.8rem;
+  border: none;
+  border-radius: 6px;
+  background: #f59e0b;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.login-box button:hover {
+  background: #d97706;
+}
+
+.dashboard {
+  padding: 2rem;
+  text-align: center;
+}
+
+.dashboard {
+  padding: 3rem 2rem;
+  max-width: 800px;
+  margin: auto;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.dashboard h1 {
+  margin-bottom: 1rem;
+  color: #0f172a;
+}
+
+.dashboard p {
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.dashboard ul {
+  list-style: disc;
+  padding-left: 1.5rem;
+  line-height: 1.8;
+}

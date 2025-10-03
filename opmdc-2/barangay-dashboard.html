@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Barangay Officials Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .modal-backdrop {
+      background-color: rgba(0,0,0,0.5);
+    }
+    /* Styles for the tracking timeline */
+    .timeline-item {
+      position: relative;
+      padding-bottom: 2rem;
+      padding-left: 2.5rem;
+      border-left: 2px solid #e2e8f0;
+    }
+    .timeline-item:last-child {
+      border-left: 2px solid transparent;
+      padding-bottom: 0;
+    }
+    .timeline-dot {
+      position: absolute;
+      left: -0.6rem;
+      top: 0.1rem;
+      width: 1.2rem;
+      height: 1.2rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .timeline-dot-pending { background-color: #f6e05e; } /* yellow-400 */
+    .timeline-dot-approved { background-color: #68d391; } /* green-400 */
+    .timeline-dot-declined { background-color: #fc8181; } /* red-400 */
+    .timeline-dot-default { background-color: #cbd5e0; } /* gray-400 */
+
+    /* Active nav link style */
+    .nav-active {
+        background-color: #1f2937; /* bg-gray-900 */
+        color: #f9fafb; /* text-gray-100 */
+    }
+  </style>
+</head>
+<body class="bg-gray-100">
+
+  <div class="flex h-screen">
+    <aside class="w-64 bg-gray-800 text-white flex flex-col">
+      <div class="p-6 text-center border-b border-gray-700">
+        <img src="image1.png" alt="Logo" class="w-16 h-16 mx-auto mb-3">
+        <h2 id="barangay-name-header" class="text-xl font-semibold">Barangay Name</h2>
+        <p class="text-xs text-gray-400">Mabini, Batangas</p>
+      </div>
+      <nav class="flex-grow px-4 py-6">
+        <a href="#" id="nav-dashboard" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md nav-active">
+          <i class="fas fa-tachometer-alt mr-3"></i>
+          Dashboard
+        </a>
+        <a href="#" id="nav-status" class="flex items-center px-4 py-2 mt-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md">
+          <i class="fas fa-spinner mr-3"></i>
+          Status
+        </a>
+        <a href="#" class="flex items-center px-4 py-2 mt-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md">
+          <i class="fas fa-history mr-3"></i>
+          History
+        </a>
+        <a href="#" class="flex items-center px-4 py-2 mt-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md">
+          <i class="fas fa-user-circle mr-3"></i>
+          Profile
+        </a>
+      </nav>
+      <div class="p-4 border-t border-gray-700">
+        <a href="login.html" class="flex items-center w-full px-4 py-2 text-gray-300 hover:bg-red-600 hover:text-white rounded-md">
+          <i class="fas fa-sign-out-alt mr-3"></i>
+          Logout
+        </a>
+      </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <header class="bg-white shadow-md p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 id="header-title" class="text-2xl font-bold text-gray-800">Dashboard</h1>
+            <p id="current-date" class="text-sm text-gray-500"></p>
+          </div>
+          <div class="flex items-center space-x-4">
+            <div class="relative">
+              <span class="absolute left-3 top-2 text-gray-400">
+                <i class="fas fa-search"></i>
+              </span>
+              <input type="text" placeholder="Search..." class="w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="flex items-center">
+              <img class="w-10 h-10 rounded-full" src="https://placehold.co/100x100/E2E8F0/4A5568?text=User" alt="User Avatar">
+              <div class="ml-3">
+                <p id="user-name" class="text-sm font-semibold text-gray-800">Barangay Tanod</p>
+                <p id="user-role" class="text-xs text-gray-500">Official</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+      
+      <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+        <div class="container mx-auto">
+
+            <div id="dashboard-view">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-800">What's up, <span id="welcome-name">Barangay Name</span>!</h2>
+                        <p class="text-gray-600">Here's a look at the latest reports and activities.</p>
+                    </div>
+                    <button id="newRequestBtn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition duration-300 flex items-center">
+                        <i class="fas fa-plus-circle mr-2"></i> New Request
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-white p-6 rounded-lg shadow-md flex items-center">
+                    <div class="bg-blue-100 text-blue-500 p-4 rounded-full">
+                        <i class="fas fa-folder text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-gray-500 text-sm">Total Reports</p>
+                        <p id="total-reports" class="text-2xl font-bold text-gray-800">0</p>
+                    </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md flex items-center">
+                    <div class="bg-green-100 text-green-500 p-4 rounded-full">
+                        <i class="fas fa-check-circle text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-gray-500 text-sm">Approved</p>
+                        <p id="approved-reports" class="text-2xl font-bold text-gray-800">0</p>
+                    </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md flex items-center">
+                    <div class="bg-yellow-100 text-yellow-500 p-4 rounded-full">
+                        <i class="fas fa-hourglass-half text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-gray-500 text-sm">Pending</p>
+                        <p id="pending-reports" class="text-2xl font-bold text-gray-800">0</p>
+                    </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md flex items-center">
+                    <div class="bg-red-100 text-red-500 p-4 rounded-full">
+                        <i class="fas fa-times-circle text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-gray-500 text-sm">Declined</p>
+                        <p id="declined-reports" class="text-2xl font-bold text-gray-800">0</p>
+                    </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Recent Activity</h3>
+                    <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">Request ID</th>
+                            <th scope="col" class="px-6 py-3">Request Type</th>
+                            <th scope="col" class="px-6 py-3">Date Submitted</th>
+                            <th scope="col" class="px-6 py-3">Status</th>
+                        </tr>
+                        </thead>
+                        <tbody id="activity-table-body">
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="status-view" class="hidden">
+                 <div class="bg-white p-6 md:p-8 rounded-lg shadow-md max-w-4xl mx-auto">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Request Status Tracker</h2>
+                    <p class="text-gray-600 mb-6">Enter a Request ID to see the current status and history of your request.</p>
+                    
+                    <div class="flex flex-col sm:flex-row sm:space-x-4">
+                        <input type="text" id="tracking-id-input" placeholder="Enter your Request ID" class="flex-grow px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3 sm:mb-0">
+                        <button id="track-btn" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-blue-700 transition duration-300">
+                            Track
+                        </button>
+                    </div>
+                    
+                    <div id="tracking-results-container" class="mt-8 border-t pt-6">
+                       <p class="text-center text-gray-500">Tracking details will appear here.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="requestModal" class="fixed inset-0 z-50 items-center justify-center hidden overflow-y-auto">
+      <div class="modal-backdrop fixed inset-0"></div>
+      <div class="bg-white rounded-lg shadow-xl m-4 p-6 w-full max-w-2xl z-10">
+          <div class="flex justify-between items-center mb-6 border-b pb-4">
+              <h2 class="text-2xl font-bold text-gray-800">Request Center</h2>
+              <button id="closeModalBtn" class="text-gray-500 hover:text-gray-800 text-3xl font-light">&times;</button>
+          </div>
+          <form id="requestForm">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                      <label for="requestType" class="block text-gray-700 text-sm font-bold mb-2">Request Type:</label>
+                      <select id="requestType" name="requestType" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                          <option value="">Select a type</option>
+                          <option value="Barangay Clearance">Barangay Clearance</option>
+                          <option value="Certificate of Residency">Certificate of Residency</option>
+                          <option value="Incident Report">Incident Report</option>
+                          <option value="Community Assistance">Community Assistance</option>
+                      </select>
+                  </div>
+                  <div>
+                      <label for="urgencyLevel" class="block text-gray-700 text-sm font-bold mb-2">Urgency Level:</label>
+                      <select id="urgencyLevel" name="urgencyLevel" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                          <option value="Low">Low</option>
+                          <option value="Medium" selected>Medium</option>
+                          <option value="High">High</option>
+                          <option value="Urgent">Urgent</option>
+                      </select>
+                  </div>
+              </div>
+              <div class="mb-4">
+                  <label for="location" class="block text-gray-700 text-sm font-bold mb-2">Location / Address:</label>
+                  <input type="text" id="location" name="location" placeholder="e.g., Purok 1, Barangay Hall" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+              </div>
+              <div class="mb-4">
+                  <label for="description" class="block text-gray-700 text-sm font-bold mb-2">Description of Request:</label>
+                  <textarea id="description" name="description" rows="3" placeholder="Provide a detailed description of your request..." class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required></textarea>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                      <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email Address:</label>
+                      <input type="email" id="email" name="email" placeholder="you@example.com" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                  </div>
+                  <div>
+                      <label for="attachment" class="block text-gray-700 text-sm font-bold mb-2">Attachment:</label>
+                      <input type="file" id="attachment" name="attachment" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                  </div>
+              </div>
+              <div class="mb-6">
+                  <label for="notes" class="block text-gray-700 text-sm font-bold mb-2">Additional Notes <span class="font-normal text-gray-500">(Optional)</span>:</label>
+                  <textarea id="notes" name="notes" rows="2" placeholder="Any other information..." class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+              </div>
+              <div class="flex items-center justify-end space-x-4 border-t pt-4">
+                  <button type="button" id="cancelModalBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                      Cancel
+                  </button>
+                  <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                      Submit Request
+                  </button>
+              </div>
+          </form>
+      </div>
+  </div>
+
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- Globals & Element References ---
+        const modal = document.getElementById('requestModal');
+        const newRequestBtn = document.getElementById('newRequestBtn');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const cancelModalBtn = document.getElementById('cancelModalBtn');
+        const requestForm = document.getElementById('requestForm');
+        const activityTableBody = document.getElementById('activity-table-body');
+        
+        // View related elements
+        const dashboardView = document.getElementById('dashboard-view');
+        const statusView = document.getElementById('status-view');
+        const navDashboard = document.getElementById('nav-dashboard');
+        const navStatus = document.getElementById('nav-status');
+        const headerTitle = document.getElementById('header-title');
+
+        // Status view specific elements
+        const trackBtn = document.getElementById('track-btn');
+        const trackingInput = document.getElementById('tracking-id-input');
+        const trackingResultsContainer = document.getElementById('tracking-results-container');
+        
+        let loggedInUser;
+        let currentUserBarangay;
+
+        // --- Authentication & Initialization ---
+        function initializeDashboard() {
+            loggedInUser = JSON.parse(localStorage.getItem('loggedInUser'));
+
+            if (!loggedInUser || loggedInUser.role !== 'Barangay Official') {
+                alert('Access denied. Please login as a Barangay Official.');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            currentUserBarangay = loggedInUser.barangayName;
+
+            // Update UI with user info
+            document.getElementById('barangay-name-header').textContent = currentUserBarangay;
+            document.getElementById('welcome-name').textContent = currentUserBarangay;
+            document.getElementById('user-name').textContent = loggedInUser.name || 'Official';
+            document.getElementById('user-role').textContent = loggedInUser.role;
+
+            renderUI();
+            updateTime();
+            setInterval(updateTime, 60000);
+        }
+
+        // --- Event Listeners ---
+        newRequestBtn.addEventListener('click', () => modal.style.display = 'flex');
+        closeModalBtn.addEventListener('click', () => modal.style.display = 'none');
+        cancelModalBtn.addEventListener('click', () => modal.style.display = 'none');
+        window.addEventListener('click', (event) => {
+            if (event.target.classList.contains('modal-backdrop')) {
+                modal.style.display = 'none';
+            }
+        });
+
+        requestForm.addEventListener('submit', handleFormSubmission);
+        trackBtn.addEventListener('click', handleTracking);
+        
+        // Navigation listeners
+        navDashboard.addEventListener('click', (e) => { e.preventDefault(); showView('dashboard'); });
+        navStatus.addEventListener('click', (e) => { e.preventDefault(); showView('status'); });
+
+        window.addEventListener('storage', (e) => {
+          if (e.key === 'opmdcRequests') {
+            renderUI();
+          }
+        });
+        
+        // --- View Management ---
+        function showView(viewName) {
+            // Hide all views
+            dashboardView.classList.add('hidden');
+            statusView.classList.add('hidden');
+
+            // Deactivate all nav links
+            document.querySelectorAll('aside nav a').forEach(link => link.classList.remove('nav-active'));
+
+            if (viewName === 'dashboard') {
+                dashboardView.classList.remove('hidden');
+                navDashboard.classList.add('nav-active');
+                headerTitle.textContent = 'Dashboard';
+            } else if (viewName === 'status') {
+                statusView.classList.remove('hidden');
+                navStatus.classList.add('nav-active');
+                headerTitle.textContent = 'Status Tracking';
+            }
+        }
+
+        // --- Core Functions ---
+        function handleFormSubmission(e) {
+            e.preventDefault();
+            const attachmentInput = document.getElementById('attachment');
+            const newRequest = {
+                id: Date.now(),
+                barangay: currentUserBarangay,
+                requestType: document.getElementById('requestType').value,
+                urgency: document.getElementById('urgencyLevel').value,
+                location: document.getElementById('location').value,
+                description: document.getElementById('description').value,
+                email: document.getElementById('email').value,
+                notes: document.getElementById('notes').value,
+                attachment: attachmentInput.files.length > 0 ? attachmentInput.files[0].name : 'No file attached',
+                date: new Date().toISOString(),
+                status: 'Pending',
+                history: [
+                    { status: 'Pending', timestamp: new Date().toISOString(), notes: 'Request submitted by barangay official.' }
+                ]
+            };
+            let requests = JSON.parse(localStorage.getItem('opmdcRequests')) || [];
+            requests.unshift(newRequest);
+            localStorage.setItem('opmdcRequests', JSON.stringify(requests));
+            requestForm.reset();
+            modal.style.display = 'none';
+            renderUI();
+        }
+
+        function handleTracking() {
+            const requestId = trackingInput.value.trim();
+            if (!requestId) {
+                trackingResultsContainer.innerHTML = `<p class="text-red-500 text-center">Please enter a Request ID.</p>`;
+                return;
+            }
+            const allRequests = JSON.parse(localStorage.getItem('opmdcRequests')) || [];
+            const request = allRequests.find(r => r.id == requestId && r.barangay === currentUserBarangay);
+            if (request) {
+                displayTrackingTimeline(request);
+            } else {
+                trackingResultsContainer.innerHTML = `<p class="text-center text-gray-600">No request found with ID #${requestId} for this barangay.</p>`;
+            }
+        }
+        
+        function displayTrackingTimeline(request) {
+            let timelineHTML = `
+                <h4 class="font-semibold mb-2">Tracking Details for Request #${request.id}</h4>
+                <p class="text-sm text-gray-600 mb-4">Type: ${request.requestType}</p>
+            `;
+            const history = request.history || [{ status: request.status, timestamp: request.date, notes: 'Initial status.' }];
+            history.forEach((event, index) => {
+                const isLast = index === history.length - 1;
+                let dotClass = 'timeline-dot-default';
+                let icon = 'fa-clock';
+                if (event.status === 'Pending') { dotClass = 'timeline-dot-pending'; icon = 'fa-hourglass-half'; }
+                if (event.status === 'Approved') { dotClass = 'timeline-dot-approved'; icon = 'fa-check'; }
+                if (event.status === 'Declined') { dotClass = 'timeline-dot-declined'; icon = 'fa-times'; }
+                timelineHTML += `
+                    <div class="timeline-item ${isLast ? 'pb-0' : ''}">
+                        <div class="timeline-dot ${dotClass}">
+                            <i class="fas ${icon} text-white text-xs"></i>
+                        </div>
+                        <div class="font-semibold">${event.status}</div>
+                        <div class="text-xs text-gray-500">${new Date(event.timestamp).toLocaleString()}</div>
+                        <p class="text-sm mt-1">${event.notes || ''}</p>
+                    </div>
+                `;
+            });
+            trackingResultsContainer.innerHTML = timelineHTML;
+        }
+
+        function renderUI() {
+            let allRequests = JSON.parse(localStorage.getItem('opmdcRequests')) || [];
+            let barangayRequests = allRequests.filter(r => r.barangay === currentUserBarangay);
+
+            document.getElementById('total-reports').textContent = barangayRequests.length;
+            document.getElementById('approved-reports').textContent = barangayRequests.filter(r => r.status === 'Approved').length;
+            document.getElementById('pending-reports').textContent = barangayRequests.filter(r => r.status === 'Pending').length;
+            document.getElementById('declined-reports').textContent = barangayRequests.filter(r => r.status === 'Declined').length;
+            
+            activityTableBody.innerHTML = '';
+            if (barangayRequests.length === 0) {
+              activityTableBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">No recent activity.</td></tr>`;
+            } else {
+              barangayRequests.slice(0, 5).forEach(req => {
+                  const statusBadge = getStatusBadge(req.status);
+                  const row = `
+                      <tr class="bg-white border-b hover:bg-gray-50">
+                          <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${req.id}</td>
+                          <td class="px-6 py-4">${req.requestType}</td>
+                          <td class="px-6 py-4">${new Date(req.date).toLocaleDateString()}</td>
+                          <td class="px-6 py-4">${statusBadge}</td>
+                      </tr>
+                  `;
+                  activityTableBody.innerHTML += row;
+              });
+            }
+        }
+
+        function getStatusBadge(status) {
+            const statuses = {
+                'Approved': 'bg-green-100 text-green-800', 'Pending': 'bg-yellow-100 text-yellow-800', 'Declined': 'bg-red-100 text-red-800',
+            };
+            const classes = statuses[status] || 'bg-gray-100 text-gray-800';
+            return `<span class="${classes} text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">${status}</span>`;
+        }
+
+        function updateTime() {
+          const dateElement = document.getElementById('current-date');
+          const now = new Date();
+          const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+          dateElement.textContent = now.toLocaleDateString('en-US', options);
+        }
+        
+        // Initial call
+        initializeDashboard();
+    });
+  </script>                            
+
+</body>
+</html>
