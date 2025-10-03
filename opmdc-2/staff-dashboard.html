@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OPMDC Staff Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .modal-backdrop {
+      background-color: rgba(0,0,0,0.5);
+    }
+    /* Custom styles for action buttons */
+    .action-btn {
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-weight: 500;
+      transition: background-color 0.2s;
+      margin-right: 0.5rem;
+      cursor: pointer;
+    }
+    .btn-approve {
+      background-color: #10B981; /* Green-500 */
+      color: white;
+    }
+    .btn-approve:hover {
+      background-color: #059669; /* Green-600 */
+    }
+    .btn-decline {
+      background-color: #EF4444; /* Red-500 */
+      color: white;
+    }
+    .btn-decline:hover {
+      background-color: #DC2626; /* Red-600 */
+    }
+     .btn-update, .btn-details {
+      background-color: #3B82F6; /* Blue-500 */
+      color: white;
+    }
+    .btn-update:hover, .btn-details:hover {
+      background-color: #2563EB; /* Blue-600 */
+    }
+    .notification-dot {
+        height: 10px;
+        width: 10px;
+        background-color: #EF4444;
+        border-radius: 50%;
+        display: inline-block;
+        margin-left: 8px;
+        animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+        0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+  </style>
+</head>
+<body class="bg-gray-100">
+
+  <div class="flex h-screen">
+    <aside class="w-64 bg-gray-800 text-white flex flex-col">
+      <div class="p-6 text-center border-b border-gray-700">
+        <img src="https://placehold.co/64x64/E2E8F0/4A5568?text=O" alt="Logo" class="w-16 h-16 mx-auto mb-3 rounded-full">
+        <h2 class="text-xl font-semibold">OPMDC Staff</h2>
+        <p class="text-xs text-gray-400">Mabini, Batangas</p>
+      </div>
+      <nav class="flex-grow px-4 py-6">
+        <a href="#" id="dashboard-link" class="sidebar-link flex items-center px-4 py-2 text-gray-100 rounded-md">
+          <i class="fas fa-tachometer-alt mr-3"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#proposals" id="proposals-link" class="sidebar-link flex items-center px-4 py-2 mt-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md">
+          <i class="fas fa-project-diagram mr-3"></i>
+          <span>Proposals</span>
+        </a>
+         <a href="#accounts" id="accounts-link" class="sidebar-link flex items-center px-4 py-2 mt-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md">
+          <i class="fas fa-users mr-3"></i>
+          <span>Accounts</span>
+        </a>
+        <a href="#" class="sidebar-link flex items-center px-4 py-2 mt-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md">
+          <i class="fas fa-history mr-3"></i>
+          <span>History</span>
+        </a>
+        <a href="#" class="sidebar-link flex items-center px-4 py-2 mt-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md">
+          <i class="fas fa-user-circle mr-3"></i>
+          <span>Profile</span>
+        </a>
+      </nav>
+      <div class="p-4 border-t border-gray-700">
+        <a href="login.html" class="flex items-center w-full px-4 py-2 text-gray-300 hover:bg-red-600 hover:text-white rounded-md">
+          <i class="fas fa-sign-out-alt mr-3"></i>
+          Logout
+        </a>
+      </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <header class="bg-white shadow-md p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 id="main-content-title" class="text-2xl font-bold text-gray-800">Dashboard</h1>
+            <p id="current-date" class="text-sm text-gray-500"></p>
+          </div>
+          <div class="flex items-center space-x-4">
+            <div class="relative">
+              <span class="absolute left-3 top-2 text-gray-400">
+                <i class="fas fa-search"></i>
+              </span>
+              <input type="text" placeholder="Search..." class="w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="flex items-center">
+              <img class="w-10 h-10 rounded-full" src="https://placehold.co/100x100/E2E8F0/4A5568?text=Staff" alt="User Avatar">
+              <div class="ml-3">
+                <p class="text-sm font-semibold text-gray-800">OPMDC Staff</p>
+                <p class="text-xs text-gray-500">Staff</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+      
+      <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+        <div id="dashboard-view" class="view">
+          <div class="container mx-auto">
+            <div class="mb-6">
+              <h2 class="text-3xl font-bold text-gray-800">Welcome back, Staff!</h2>
+              <p class="text-gray-600">Review and manage incoming reports and proposals.</p>
+            </div>
+            
+            <h3 class="text-xl font-semibold text-gray-700 mb-4">Activity Reports & Accounts Overview</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div class="bg-white p-6 rounded-lg shadow-md flex items-center">
+                <div class="bg-blue-100 text-blue-500 p-4 rounded-full"><i class="fas fa-folder text-2xl"></i></div>
+                <div class="ml-4"><p class="text-gray-500 text-sm">Total Requests</p><p id="total-requests-stat" class="text-2xl font-bold text-gray-800">0</p></div>
+              </div>
+              <div class="bg-white p-6 rounded-lg shadow-md flex items-center">
+                <div class="bg-yellow-100 text-yellow-500 p-4 rounded-full"><i class="fas fa-hourglass-half text-2xl"></i></div>
+                <div class="ml-4"><p class="text-gray-500 text-sm">Pending Requests</p><p id="pending-requests-stat" class="text-2xl font-bold text-gray-800">0</p></div>
+              </div>
+              <div class="bg-white p-6 rounded-lg shadow-md flex items-center">
+                <div class="bg-green-100 text-green-500 p-4 rounded-full"><i class="fas fa-users-cog text-2xl"></i></div>
+                <div class="ml-4"><p class="text-gray-500 text-sm">Total Accounts</p><p id="total-accounts-stat" class="text-2xl font-bold text-gray-800">0</p></div>
+              </div>
+               <div class="bg-white p-6 rounded-lg shadow-md flex items-center">
+                <div class="bg-red-100 text-red-500 p-4 rounded-full"><i class="fas fa-user-clock text-2xl"></i></div>
+                <div class="ml-4"><p class="text-gray-500 text-sm">Pending Accounts</p><p id="pending-accounts-stat" class="text-2xl font-bold text-gray-800">0</p></div>
+              </div>
+            </div>
+
+            <div class="mt-8 bg-white p-6 rounded-lg shadow-md">
+              <h3 class="text-xl font-semibold text-gray-800 mb-4">Recent Submissions</h3>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-500">
+                  <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                    <tr>
+                      <th scope="col" class="px-6 py-3">Request ID</th>
+                      <th scope="col" class="px-6 py-3">Barangay</th>
+                      <th scope="col" class="px-6 py-3">Type</th>
+                      <th scope="col" class="px-6 py-3">Date Submitted</th>
+                      <th scope="col" class="px-6 py-3">Status</th>
+                      <th scope="col" class="px-6 py-3">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="requests-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="proposals-view" class="view hidden">
+            <div class="container mx-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-800">Project Proposal Management</h2>
+                        <p class="text-gray-600">Monitor, track, and manage all project proposals.</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <label for="statusFilter" class="text-sm font-medium text-gray-700">Filter by status:</label>
+                        <select id="statusFilter" class="w-48 bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option value="all">All</option>
+                            <option value="For Review">For Review</option>
+                            <option value="Processing">Processing</option>
+                            <option value="Requires Revision">Requires Revision</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Declined">Declined</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3">Project Title</th>
+                                    <th scope="col" class="px-6 py-3">Barangay</th>
+                                    <th scope="col" class="px-6 py-3">Date Submitted</th>
+                                    <th scope="col" class="px-6 py-3">Last Updated</th>
+                                    <th scope="col" class="px-6 py-3">Status</th>
+                                    <th scope="col" class="px-6 py-3">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="proposals-management-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="accounts-view" class="view hidden">
+            <div class="container mx-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-800">Barangay Account Management</h2>
+                        <p class="text-gray-600">Create and manage accounts for each barangay.</p>
+                    </div>
+                    <button id="createAccountBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center">
+                        <i class="fas fa-plus mr-2"></i> Create Account
+                    </button>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3">Barangay</th>
+                                    <th scope="col" class="px-6 py-3">Representative</th>
+                                    <th scope="col" class="px-6 py-3">Username</th>
+                                    <th scope="col" class="px-6 py-3">Status</th>
+                                    <th scope="col" class="px-6 py-3">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="accounts-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="proposalDetailModal" class="fixed inset-0 z-50 items-center justify-center hidden">
+        <div class="modal-backdrop fixed inset-0"></div>
+        <div class="bg-white rounded-lg shadow-xl m-auto p-8 w-full max-w-2xl z-10 max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4 border-b pb-4">
+                <h2 class="text-2xl font-bold text-gray-800">Proposal Details</h2>
+                <button id="closeDetailModalBtn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+            </div>
+            <div class="flex-grow overflow-y-auto pr-4">
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div><p class="font-semibold text-gray-700">Project Title:</p><p id="detail-title"></p></div>
+                    <div><p class="font-semibold text-gray-700">Barangay:</p><p id="detail-barangay"></p></div>
+                    <div><p class="font-semibold text-gray-700">Date Submitted:</p><p id="detail-date"></p></div>
+                    <div><p class="font-semibold text-gray-700">Current Status:</p><p id="detail-status"></p></div>
+                </div>
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Document History</h3>
+                    <div id="proposal-history-list" class="space-y-2 max-h-40 overflow-y-auto bg-gray-50 p-3 rounded-md"></div>
+                </div>
+                <form id="proposalUpdateForm">
+                    <input type="hidden" id="proposalId">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4 border-t pt-4">Update Status</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="proposalStatus" class="block text-gray-700 text-sm font-bold mb-2">New Status:</label>
+                            <select id="proposalStatus" name="proposalStatus" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                <option>For Review</option>
+                                <option>Processing</option>
+                                <option>Requires Revision</option>
+                                <option>Approved</option>
+                                <option>Declined</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="remarks" class="block text-gray-700 text-sm font-bold mb-2">Remarks (Optional):</label>
+                            <input type="text" id="remarks" name="remarks" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Add a comment...">
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-end mt-6">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+  <div id="createAccountModal" class="fixed inset-0 z-50 items-center justify-center hidden">
+        <div class="modal-backdrop fixed inset-0"></div>
+        <div class="bg-white rounded-lg shadow-xl m-auto p-8 w-full max-w-md z-10">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Create New Barangay Account</h2>
+                <button id="closeAccountModalBtn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+            </div>
+            <form id="createBarangayAccountForm">
+                <div class="mb-4">
+                    <label for="barangayName" class="block text-gray-700 text-sm font-bold mb-2">Barangay:</label>
+                    <input type="text" id="barangayName" name="barangayName" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                <div class="mb-4">
+                    <label for="representative" class="block text-gray-700 text-sm font-bold mb-2">Representative Name:</label>
+                    <input type="text" id="representative" name="representative" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                <div class="mb-4">
+                    <label for="username" class="block text-gray-700 text-sm font-bold mb-2">Username:</label>
+                    <input type="text" id="username" name="username" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                 <div class="mb-6">
+                    <label for="password" class="block text-gray-700 text-sm font-bold mb-2">Password:</label>
+                    <input type="password" id="password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                <div class="flex items-center justify-end mt-6">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        Create Account
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="alertModal" class="fixed inset-0 z-60 items-center justify-center hidden">
+        <div class="modal-backdrop fixed inset-0"></div>
+        <div class="bg-white rounded-lg shadow-xl m-auto p-8 w-full max-w-sm z-10">
+            <h2 id="alertModalTitle" class="text-xl font-bold text-gray-800 mb-4">Alert</h2>
+            <p id="alertModalMessage" class="text-gray-600 mb-6">Message goes here.</p>
+            <div id="alertModalActions" class="flex items-center justify-end"></div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // --- DOM Elements ---
+    const allViews = document.querySelectorAll('.view');
+    const mainContentTitle = document.getElementById('main-content-title');
+    const sidebarLinks = document.querySelectorAll('.sidebar-link');
+    const createAccountBtn = document.getElementById('createAccountBtn');
+    const createAccountModal = document.getElementById('createAccountModal');
+    const closeAccountModalBtn = document.getElementById('closeAccountModalBtn');
+    const createAccountForm = document.getElementById('createBarangayAccountForm');
+    
+    // --- Initial setup ---
+    seedInitialData(); 
+    
+    // --- Event Listeners ---
+    sidebarLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = link.getAttribute('href').substring(1) + '-view';
+            // A special case for the dashboard link which has href="#"
+            const viewIdToShow = targetId === "-view" ? "dashboard-view" : targetId;
+            const targetView = document.getElementById(viewIdToShow);
+            const title = link.querySelector('span').textContent;
+            showView(targetView, title, link);
+        });
+    });
+    
+    createAccountBtn.addEventListener('click', () => {
+        createAccountForm.reset();
+        createAccountModal.style.display = 'flex';
+    });
+    closeAccountModalBtn.addEventListener('click', () => createAccountModal.style.display = 'none');
+
+    createAccountForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        
+        let barangayAccounts = JSON.parse(localStorage.getItem('barangayAccounts')) || [];
+        
+        const newAccount = {
+            barangayName: document.getElementById('barangayName').value,
+            representative: document.getElementById('representative').value,
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value,
+            role: 'Barangay Official',
+            status: 'approved' 
+        };
+      
+        const userExists = barangayAccounts.some(acc => acc.username === newAccount.username);
+        if (userExists) {
+            showAlert('Error', 'Username already exists. Please choose a different one.');
+            return;
+        }
+
+        barangayAccounts.push(newAccount);
+        localStorage.setItem('barangayAccounts', JSON.stringify(barangayAccounts));
+
+        showAlert('Success', `Account for ${newAccount.barangayName} has been created successfully!`);
+        createAccountForm.reset();
+        createAccountModal.style.display = 'none';
+        renderAllViews(); 
+    });
+    
+    window.addEventListener('click', (event) => {
+        if (event.target.classList.contains('modal-backdrop')) {
+            proposalDetailModal.style.display = 'none';
+            createAccountModal.style.display = 'none';
+            alertModal.style.display = 'none';
+        }
+    });
+
+    // Listen for data changes from other tabs to keep the UI live
+    window.addEventListener('storage', (e) => {
+      if (['opmdcRequests', 'opmdcAccounts', 'barangayAccounts', 'opmdcProposals'].includes(e.key)) {
+        renderAllViews();
+      }
+    });
+
+    // --- Initial Page Load ---
+    updateTime();
+    setInterval(updateTime, 60000); // Update time every minute
+    showView(document.getElementById('dashboard-view'), 'Dashboard', document.getElementById('dashboard-link'));
+});
+
+// --- Core Functions ---
+function showView(viewToShow, title, linkToActivate) {
+    document.querySelectorAll('.view').forEach(view => view.classList.add('hidden'));
+    if (viewToShow) {
+        viewToShow.classList.remove('hidden');
+    }
+    document.getElementById('main-content-title').textContent = title;
+    
+    document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('bg-gray-700', 'text-white'));
+     document.querySelectorAll('.sidebar-link').forEach(link => link.classList.add('text-gray-300'));
+    if (linkToActivate) {
+        linkToActivate.classList.add('bg-gray-700', 'text-white');
+        linkToActivate.classList.remove('text-gray-300');
+    }
+    
+    renderAllViews();
+}
+
+function renderAllViews() {
+    renderDashboardUI();
+    renderAccountsTable();
+    renderRequestsTable();
+    // Also render proposals if that view might be visible
+    renderProposalsPage();
+}
+
+function renderDashboardUI() {
+    const requests = JSON.parse(localStorage.getItem('opmdcRequests')) || [];
+    const accounts = JSON.parse(localStorage.getItem('barangayAccounts')) || [];
+    
+    document.getElementById('total-requests-stat').textContent = requests.length;
+    document.getElementById('pending-requests-stat').textContent = requests.filter(r => r.status === 'For Review').length;
+    document.getElementById('total-accounts-stat').textContent = accounts.length;
+    document.getElementById('pending-accounts-stat').textContent = accounts.filter(a => a.status === 'pending').length;
+}
+
+function renderAccountsTable() {
+    const accounts = JSON.parse(localStorage.getItem('barangayAccounts')) || [];
+    const tableBody = document.getElementById('accounts-table-body');
+    if (!tableBody) return;
+    tableBody.innerHTML = '';
+    
+    if (accounts.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4">No accounts found.</td></tr>`;
+        return;
+    }
+
+    accounts.forEach(acc => {
+        const row = `
+            <tr class="border-b">
+                <td class="py-3 px-4">${acc.barangayName}</td>
+                <td class="py-3 px-4">${acc.representative}</td>
+                <td class="py-3 px-4">${acc.username}</td>
+                <td class="py-3 px-4">${getStatusBadge(acc.status)}</td>
+                <td class="py-3 px-4">
+                    ${acc.status === 'pending' ? `
+                        <button class="action-btn btn-approve" onclick="updateAccountStatus('${acc.username}', 'approved')">Approve</button>
+                        <button class="action-btn btn-decline" onclick="updateAccountStatus('${acc.username}', 'declined')">Decline</button>
+                    ` : `
+                        <button class="action-btn btn-decline" onclick="deleteAccount('${acc.username}')">Delete</button>
+                    `}
+                </td>
+            </tr>
+        `;
+        tableBody.innerHTML += row;
+    });
+}
+
+
+function renderRequestsTable() {
+    const requests = JSON.parse(localStorage.getItem('opmdcRequests')) || [];
+    const tableBody = document.getElementById('requests-table-body');
+    if (!tableBody) return;
+    tableBody.innerHTML = '';
+
+    if (requests.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4">No requests found.</td></tr>`;
+        return;
+    }
+
+    requests.forEach(req => {
+        const row = `
+            <tr class="border-b">
+                <td class="py-3 px-4">${req.id}</td>
+                <td class="py-3 px-4">${req.barangayName}</td>
+                <td class="py-3 px-4">${req.type}</td>
+                <td class="py-3 px-4">${new Date(req.submittedDate).toLocaleString()}</td>
+                <td class="py-3 px-4">${getStatusBadge(req.status)}</td>
+                <td class="py-3 px-4">
+                    ${req.status === 'For Review' ? `
+                        <button class="action-btn btn-approve" onclick="updateRequestStatus('${req.id}', 'Processing')">Process</button>
+                    ` : req.status === 'Processing' ? `
+                        <button class="action-btn btn-approve" onclick="updateRequestStatus('${req.id}', 'For Final Approval')">Forward</button>
+                        <button class="action-btn btn-decline" onclick="updateRequestStatus('${req.id}', 'Declined')">Decline</button>
+                    ` : '-'}
+                </td>
+            </tr>
+        `;
+        tableBody.innerHTML += row;
+    });
+}
+
+function renderProposalsPage() {
+    const proposalsManagementTableBody = document.getElementById('proposals-management-table-body');
+    if (!proposalsManagementTableBody) return;
+    let proposals = JSON.parse(localStorage.getItem('opmdcProposals')) || [];
+    const statusFilter = document.getElementById('statusFilter');
+    const filterValue = statusFilter.value;
+    
+    if (filterValue !== 'all') {
+        proposals = proposals.filter(p => p.status === filterValue);
+    }
+
+    proposalsManagementTableBody.innerHTML = '';
+    if (proposals.length === 0) {
+      proposalsManagementTableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-gray-500">No project proposals match the filter.</td></tr>`;
+      return;
+    }
+    proposals.forEach(prop => {
+        const statusBadge = getStatusBadge(prop.status);
+        const actionButton = `<button class="action-btn btn-details" onclick="openProposalDetails('${prop.id}')">View Details</button>`;
+        const row = `<tr class="bg-white border-b">
+                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${prop.title}</th>
+                <td class="px-6 py-4">${prop.barangay}</td><td class="px-6 py-4">${prop.date}</td>
+                <td class="px-6 py-4">${prop.lastUpdated}</td><td class="px-6 py-4">${statusBadge}</td>
+                <td class="px-6 py-4">${actionButton}</td></tr>`;
+        proposalsManagementTableBody.innerHTML += row;
+    });
+}
+
+
+function getStatusBadge(status) {
+    const colors = {
+        'Approved': 'bg-green-100 text-green-800',
+        'approved': 'bg-green-100 text-green-800',
+        'Declined': 'bg-red-100 text-red-800',
+        'declined': 'bg-red-100 text-red-800',
+        'For Review': 'bg-blue-100 text-blue-800',
+        'Processing': 'bg-indigo-100 text-indigo-800',
+        'For Final Approval': 'bg-yellow-100 text-yellow-800',
+        'pending': 'bg-yellow-100 text-yellow-800',
+        'Requires Revision': 'bg-pink-100 text-pink-800',
+        'No Account': 'bg-gray-200 text-gray-800'
+    };
+    const colorClass = colors[status] || 'bg-gray-100 text-gray-800';
+    return `<span class="${colorClass} text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">${status}</span>`;
+}
+
+function updateTime() {
+    const dateElement = document.getElementById('current-date');
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+    dateElement.textContent = new Date().toLocaleDateString('en-US', options);
+}
+
+function seedInitialData() {
+    if (!localStorage.getItem('opmdcAccounts')) {
+        const opmdcAccounts = [
+            { name: 'John Doe', username: 'staff', password: 'password', role: 'OPMDC Staff', status: 'active' },
+            { name: 'Jane Smith', username: 'head', password: 'password', role: 'OPMDC Head', status: 'active' },
+        ];
+        localStorage.setItem('opmdcAccounts', JSON.stringify(opmdcAccounts));
+    }
+
+    if (!localStorage.getItem('barangayAccounts')) {
+        const barangayAccounts = [
+            { barangayName: 'San Cristobal', representative: 'Juan Dela Cruz', username: 'sancristobal', password: 'password', role: 'Barangay Official', status: 'approved' },
+            { barangayName: 'Pansol', representative: 'Maria Clara', username: 'pansol', password: 'password', role: 'Barangay Official', status: 'pending' },
+        ];
+        localStorage.setItem('barangayAccounts', JSON.stringify(barangayAccounts));
+    }
+    
+    if (!localStorage.getItem('opmdcProposals')) {
+        const mockProposals = [
+            { id: 1, title: 'Community Garden Initiative', barangay: 'Poblacion', date: '2025-09-10', status: 'For Review', lastUpdated: '2025-09-10', history: [{status: 'For Review', date: '2025-09-10', user: 'Barangay', remarks: 'Initial submission.'}]},
+            { id: 2, title: 'Youth Sports Program', barangay: 'San Jose', date: '2025-09-08', status: 'Processing', lastUpdated: '2025-09-11', history: [{status: 'For Review', date: '2025-09-08', user: 'Barangay'}, {status: 'Processing', date: '2025-09-11', user: 'Staff', remarks: 'Initial review complete.'}]},
+            { id: 3, title: 'Waste Management Seminar', barangay: 'Anilao I', date: '2025-09-05', status: 'Approved', lastUpdated: '2025-09-12', history: [{status: 'For Review', date: '2025-09-05', user: 'Barangay'}, {status: 'Processing', date: '2025-09-09', user: 'Staff'}, {status: 'Approved', date: '2025-09-12', user: 'Staff', remarks: 'All requirements met.'}]}
+        ];
+        localStorage.setItem('opmdcProposals', JSON.stringify(mockProposals));
+    }
+}
+
+function showAlert(title, message, callback) {
+    document.getElementById('alertModalTitle').textContent = title;
+    document.getElementById('alertModalMessage').textContent = message;
+    const actions = document.getElementById('alertModalActions');
+    actions.innerHTML = `<button id="alertOkBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">OK</button>`;
+    alertModal.style.display = 'flex';
+    document.getElementById('alertOkBtn').onclick = () => {
+        alertModal.style.display = 'none';
+        if (callback) callback();
+    };
+}
+
+function showConfirm(title, message, callback) {
+    document.getElementById('alertModalTitle').textContent = title;
+    document.getElementById('alertModalMessage').textContent = message;
+    const actions = document.getElementById('alertModalActions');
+    actions.innerHTML = `
+        <button id="confirmCancelBtn" class="mr-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Cancel</button>
+        <button id="confirmOkBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Delete</button>`;
+    alertModal.style.display = 'flex';
+    document.getElementById('confirmOkBtn').onclick = () => { alertModal.style.display = 'none'; if (callback) callback(true); };
+    document.getElementById('confirmCancelBtn').onclick = () => { alertModal.style.display = 'none'; if (callback) callback(false); };
+}
+
+// --- Global Functions for button clicks (must be global for inline onclick) ---
+function updateAccountStatus(username, newStatus) {
+    let accounts = JSON.parse(localStorage.getItem('barangayAccounts')) || [];
+    const accountIndex = accounts.findIndex(acc => acc.username === username);
+    if (accountIndex !== -1) {
+        accounts[accountIndex].status = newStatus;
+        localStorage.setItem('barangayAccounts', JSON.stringify(accounts));
+        renderAllViews();
+    }
+}
+
+function deleteAccount(username) {
+    showConfirm('Confirm Deletion', `Are you sure you want to delete the account for ${username}?`, (confirmed) => {
+        if (confirmed) {
+            let accounts = JSON.parse(localStorage.getItem('barangayAccounts')) || [];
+            const updatedAccounts = accounts.filter(acc => acc.username !== username);
+            localStorage.setItem('barangayAccounts', JSON.stringify(updatedAccounts));
+            renderAllViews();
+            showAlert('Deleted', `The account for ${username} has been deleted.`);
+        }
+    });
+}
+
+function updateRequestStatus(requestId, newStatus) {
+    let requests = JSON.parse(localStorage.getItem('opmdcRequests')) || [];
+    // request ID is a string in this implementation
+    const requestIndex = requests.findIndex(req => req.id == requestId);
+    if (requestIndex !== -1) {
+        requests[requestIndex].status = newStatus;
+        localStorage.setItem('opmdcRequests', JSON.stringify(requests));
+        renderAllViews();
+    }
+}
+
+function openProposalDetails(proposalId) {
+    const proposalDetailModal = document.getElementById('proposalDetailModal');
+    const proposals = JSON.parse(localStorage.getItem('opmdcProposals')) || [];
+    const proposal = proposals.find(p => p.id == proposalId);
+    if (!proposal) return;
+
+    document.getElementById('proposalId').value = proposal.id;
+    document.getElementById('detail-title').textContent = proposal.title;
+    document.getElementById('detail-barangay').textContent = proposal.barangay;
+    document.getElementById('detail-date').textContent = proposal.date;
+    document.getElementById('detail-status').innerHTML = getStatusBadge(proposal.status);
+    document.getElementById('proposalStatus').value = proposal.status;
+
+    const historyList = document.getElementById('proposal-history-list');
+    historyList.innerHTML = '';
+    proposal.history.slice().reverse().forEach(entry => {
+        const remarksHtml = entry.remarks ? `<p class="text-xs text-gray-500 mt-1 pl-4 border-l-2 border-gray-300">"${entry.remarks}"</p>` : '';
+        historyList.innerHTML += `<div class="text-sm"><p><span class="font-semibold">${entry.user}</span> updated status to <span class="font-semibold">${entry.status}</span> on ${entry.date}</p>${remarksHtml}</div>`;
+    });
+    
+    proposalDetailModal.style.display = 'flex';
+    
+    document.getElementById('closeDetailModalBtn').onclick = () => proposalDetailModal.style.display = 'none';
+    
+    document.getElementById('proposalUpdateForm').onsubmit = e => {
+        e.preventDefault();
+        const newStatus = document.getElementById('proposalStatus').value;
+        const remarks = document.getElementById('remarks').value;
+        updateProposalStatus(proposalId, newStatus, remarks);
+        proposalDetailModal.style.display = 'none';
+    };
+}
+
+function updateProposalStatus(proposalId, newStatus, remarks) {
+    let proposals = JSON.parse(localStorage.getItem('opmdcProposals')) || [];
+    const proposalIndex = proposals.findIndex(p => p.id == proposalId);
+    if (proposalIndex !== -1) {
+        proposals[proposalIndex].status = newStatus;
+        proposals[proposalIndex].lastUpdated = new Date().toISOString().split('T')[0];
+        proposals[proposalIndex].history.push({
+            status: newStatus,
+            date: new Date().toISOString().split('T')[0],
+            user: 'Staff',
+            remarks: remarks || 'Status updated.'
+        });
+        localStorage.setItem('opmdcProposals', JSON.stringify(proposals));
+        renderAllViews();
+    }
+}
+</script>
+
+</body>
+</html>
