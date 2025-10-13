@@ -48,6 +48,23 @@
         background-color: #1f2937; /* bg-gray-900 */
         color: #f9fafb; /* text-gray-100 */
     }
+    /* Notification styles */
+    .notif-badge {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: #ef4444; /* red-500 */
+      color: white;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 9999px;
+      border: 2px solid white;
+    }
+    .notif-dropdown { min-width: 300px; max-width: 360px; }
+    .notif-item.unread { background: rgba(59,130,246,0.06); }
+    .notif-item { display: flex; gap: 0.75rem; padding: 0.5rem; align-items: start; }
+    .notif-item .time { font-size: 11px; color: #6b7280; }
+    .notif-empty { padding: 1rem; color: #6b7280; }
   </style>
 </head>
 <body class="bg-gray-100">
@@ -55,7 +72,7 @@
   <div class="flex h-screen">
     <aside class="w-64 bg-gray-800 text-white flex flex-col">
       <div class="p-6 text-center border-b border-gray-700">
-        <img src="assets/image1.png" alt="Logo" class="w-16 h-16 mx-auto mb-3">
+        <img src="image1.png" alt="Logo" class="w-16 h-16 mx-auto mb-3">
         <h2 id="barangay-name-header" class="text-xl font-semibold">Barangay Name</h2>
         <p class="text-xs text-gray-400">Mabini, Batangas</p>
       </div>
@@ -99,6 +116,28 @@
               </span>
               <input type="text" placeholder="Search..." class="w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
+            <!-- Notification bell -->
+            <div class="relative">
+              <button id="notifBellBtn" title="Notifications" class="relative p-2 rounded-full hover:bg-gray-100 focus:outline-none">
+                <i class="fas fa-bell text-gray-600 text-lg"></i>
+                <span id="notifBadge" class="notif-badge hidden">0</span>
+              </button>
+              <div id="notificationDropdown" class="hidden absolute right-0 mt-2 bg-white shadow-lg rounded-lg notif-dropdown z-50">
+                <div class="p-3 border-b flex items-center justify-between">
+                  <strong>Notifications</strong>
+                  <div class="flex items-center space-x-2">
+                    <button id="markAllReadBtn" class="text-xs text-blue-600 hover:underline">Mark all read</button>
+                  </div>
+                </div>
+                <div id="notifList" class="max-h-64 overflow-auto p-2">
+                  <div class="notif-empty text-center">No notifications.</div>
+                </div>
+                <div class="p-2 border-t text-right">
+                  <!-- sample button removed -->
+                </div>
+              </div>
+            </div>
+
             <div class="flex items-center">
               <img class="w-10 h-10 rounded-full" src="https://placehold.co/100x100/E2E8F0/4A5568?text=User" alt="User Avatar">
               <div class="ml-3">
@@ -385,7 +424,20 @@
             localStorage.setItem('opmdcRequests', JSON.stringify(requests));
             requestForm.reset();
             modal.style.display = 'none';
-            renderUI();
+      renderUI();
+
+      // --- send server notifications to staff and head ---
+      (async () => {
+        const payload = { title: 'New Request', body: `${newRequest.requestType} submitted by ${currentUserBarangay} (${newRequest.email})`, target_role: 'OPMDC Staff' };
+        try {
+          await fetch('notifications.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          // also notify head
+          payload.target_role = 'OPMDC Head';
+          await fetch('notifications.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        } catch (err) {
+          console.error('Notification send failed', err);
+        }
+      })();
         }
 
         function handleTracking() {
@@ -475,8 +527,127 @@
         
         // Initial call
         initializeDashboard();
+
+    // --- Notification System ---
+    const notifBellBtn = document.getElementById('notifBellBtn');
+    const notificationDropdown = document.getElementById('notificationDropdown');
+    const notifBadge = document.getElementById('notifBadge');
+    const notifList = document.getElementById('notifList');
+    const markAllReadBtn = document.getElementById('markAllReadBtn');
+
+    function loadNotifications() {
+      return JSON.parse(localStorage.getItem('opmdcNotifications')) || [];
+    }
+
+    function saveNotifications(arr) {
+      localStorage.setItem('opmdcNotifications', JSON.stringify(arr));
+      window.dispatchEvent(new Event('storage'));
+    }
+
+    function renderNotifications() {
+      const notes = loadNotifications();
+      const unreadCount = notes.filter(n => !n.read).length;
+      if (unreadCount > 0) {
+        notifBadge.textContent = unreadCount;
+        notifBadge.classList.remove('hidden');
+      } else {
+        notifBadge.classList.add('hidden');
+      }
+
+      if (notes.length === 0) {
+        notifList.innerHTML = '<div class="notif-empty text-center">No notifications.</div>';
+        return;
+      }
+
+      notifList.innerHTML = '';
+      notes.slice().reverse().forEach(note => {
+        const item = document.createElement('div');
+        item.className = 'notif-item rounded hover:bg-gray-50 p-2 ' + (note.read ? '' : 'unread');
+        item.innerHTML = `
+          <div class="flex-1">
+            <div class="text-sm font-medium">${escapeHtml(note.title)}</div>
+            <div class="text-xs text-gray-600 mt-1">${escapeHtml(note.body)}</div>
+            <div class="time mt-1">${new Date(note.time).toLocaleString()}</div>
+          </div>
+          <div class="flex flex-col items-end ml-2 space-y-2">
+            <button class="mark-read-btn text-xs text-blue-600">${note.read ? 'Unread' : 'Mark read'}</button>
+            <button class="delete-btn text-xs text-red-600">Delete</button>
+          </div>
+        `;
+
+        // Handlers
+        item.querySelector('.mark-read-btn').addEventListener('click', () => {
+          toggleRead(note.id);
+        });
+        item.querySelector('.delete-btn').addEventListener('click', () => {
+          deleteNotification(note.id);
+        });
+
+        notifList.appendChild(item);
+      });
+    }
+
+    function toggleRead(id) {
+      const notes = loadNotifications();
+      const idx = notes.findIndex(n => n.id === id);
+      if (idx === -1) return;
+      notes[idx].read = !notes[idx].read;
+      saveNotifications(notes);
+      renderNotifications();
+    }
+
+    function markAllRead() {
+      const notes = loadNotifications();
+      notes.forEach(n => n.read = true);
+      saveNotifications(notes);
+      renderNotifications();
+    }
+
+    function deleteNotification(id) {
+      let notes = loadNotifications();
+      notes = notes.filter(n => n.id !== id);
+      saveNotifications(notes);
+      renderNotifications();
+    }
+
+    function addNotification(title, body) {
+      const notes = loadNotifications();
+      notes.push({ id: Date.now() + Math.random(), title, body, time: new Date().toISOString(), read: false });
+      saveNotifications(notes);
+      renderNotifications();
+    }
+
+    // Simple XSS-safe text escaper
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>\"']/g, function (s) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[s];
+      });
+    }
+
+    // Toggle dropdown
+    notifBellBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      notificationDropdown.classList.toggle('hidden');
+      if (!notificationDropdown.classList.contains('hidden')) {
+        renderNotifications();
+      }
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!notificationDropdown.classList.contains('hidden')) {
+        notificationDropdown.classList.add('hidden');
+      }
+    });
+
+    // sample button removed; use addNotification(...) and POST to notifications.php where needed
+
+    markAllReadBtn.addEventListener('click', () => markAllRead());
+
+    // Initial render of notifications
+    renderNotifications();
     });
   </script>                            
 
 </body>
-</html>
+</html> 

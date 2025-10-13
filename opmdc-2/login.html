@@ -97,7 +97,7 @@
                 <p class="mt-2 text-gray-500">Welcome! Please sign in.</p>
             </div>
             
-            <form id="loginForm" class="mt-8 space-y-6">
+            <form id="loginForm" class="mt-8 space-y-6" method="post" action="authenticate.php">
               <div class="animate-fade-in-up" style="animation-delay: 0.4s;">
                 <label for="credential" class="text-sm font-medium text-gray-700">Username or Email</label>
                 <input type="text" id="credential" name="credential" placeholder="Enter your username or email" required class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
@@ -140,76 +140,60 @@
   </main>
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const loginForm = document.getElementById("loginForm");
-        const loginCard = document.getElementById("login-card"); // Corrected ID from loginCard to login-card
-        const submitButton = loginForm.querySelector("button[type='submit']");
-        const buttonText = submitButton.querySelector(".button-text"); // Corrected selector
-        const loader = submitButton.querySelector(".loader"); // Corrected selector
+  document.addEventListener("DOMContentLoaded", () => {
+    const loginForm = document.getElementById("loginForm");
+    const loginCard = document.getElementById("login-card");
+    const submitButton = loginForm.querySelector("button[type='submit']");
+    const buttonText = submitButton.querySelector(".button-text");
+    const loader = submitButton.querySelector(".loader");
 
-        loginForm.addEventListener("submit", (event) => {
-            event.preventDefault();
-            
-            buttonText.classList.add("hidden");
-            loader.classList.remove("hidden");
-            submitButton.disabled = true;
+    loginForm.addEventListener("submit", (event) => {
+      event.preventDefault();
 
-            setTimeout(() => {
-                const credential = document.getElementById("credential").value;
-                const password = document.getElementById("password").value;
-                
-                // In a real app, this data would come from a server.
-                const createdAccounts = JSON.parse(localStorage.getItem("barangayAccounts")) || [];
-                const staffAccounts = JSON.parse(localStorage.getItem("opmdcAccounts")) || [];
-                const allAccounts = [...createdAccounts, ...staffAccounts];
+      buttonText.classList.add("hidden");
+      loader.classList.remove("hidden");
+      submitButton.disabled = true;
 
-                // Note: The logic from the original HTML used username OR email. This version uses username.
-                // To match both, you could change the find condition to:
-                // (u.username === credential || u.email === credential) && u.password === password
-                let user = allAccounts.find(u => u.username === credential && u.password === password && (u.status === 'approved' || u.status === 'active'));
+      const formData = new FormData(loginForm);
 
-                if (user) {
-                    // Store minimal, non-sensitive user info
-                    const userToStore = {
-                        barangayName: user.barangayName, // May be undefined for staff
-                        role: user.role,
-                        name: user.name
-                    };
-                    localStorage.setItem('loggedInUser', JSON.stringify(userToStore));
-                    
-                    alert("Login successful! Redirecting...");
-                    
-                    // Redirect based on user role
-                    switch(user.role) {
-                        case 'Barangay Official':
-                            window.location.href = "barangay-dashboard.html";
-                            break;
-                        case 'OPMDC Staff':
-                            window.location.href = "staff-dashboard.html";
-                            break;
-                        case 'OPMDC Head':
-                            window.location.href = "head-dashboard.html";
-                            break;
-                        default:
-                            // Fallback in case of an unknown role
-                            alert("Unknown user role.");
-                            // Reset button state if redirection fails
-                            buttonText.classList.remove("hidden");
-                            loader.classList.add("hidden");
-                            submitButton.disabled = false;
-                    }
-
-                } else {
-                    loginCard.classList.add("animate-shake");
-                    alert("Invalid credentials or account not approved. Please try again.");
-                    buttonText.classList.remove("hidden");
-                    loader.classList.add("hidden");
-                    submitButton.disabled = false;
-                    setTimeout(() => loginCard.classList.remove("animate-shake"), 600);
-                }
-            }, 1000);
+      setTimeout(() => {
+        fetch(loginForm.action, {
+          method: 'POST',
+          body: formData,
+          headers: { 'Accept': 'application/json' }
+        }).then(r => r.json()).then(data => {
+          if (data.success) {
+            switch (data.role) {
+              case 'Barangay Official':
+                window.location.href = 'barangay-dashboard.html';
+                break;
+              case 'OPMDC Staff':
+                window.location.href = 'staff-dashboard.html';
+                break;
+              case 'OPMDC Head':
+                window.location.href = 'head-dashboard.html';
+                break;
+              default:
+                window.location.href = 'index.html';
+            }
+          } else {
+            loginCard.classList.add('animate-shake');
+            alert(data.message || 'Invalid credentials or account not approved.');
+            buttonText.classList.remove('hidden');
+            loader.classList.add('hidden');
+            submitButton.disabled = false;
+            setTimeout(() => loginCard.classList.remove('animate-shake'), 600);
+          }
+        }).catch(err => {
+          console.error(err);
+          alert('Server error');
+          buttonText.classList.remove('hidden');
+          loader.classList.add('hidden');
+          submitButton.disabled = false;
         });
+      }, 600);
     });
+  });
   </script>
   
 </body>
