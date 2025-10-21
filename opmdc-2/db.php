@@ -4,7 +4,7 @@
 $dbHost = 'localhost';
 $dbUser = 'root';
 $dbPass = '';
-$dbName = 'capstone';
+$dbName = 'opmdc';
 
 $mysqli = new mysqli($dbHost, $dbUser, $dbPass, $dbName);
 

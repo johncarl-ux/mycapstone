@@ -41,3 +41,33 @@ Testing
 Security notes
 
 - This is a minimal example. For production, use HTTPS, stronger session configuration, CSRF tokens, rate limiting, and a proper user management UI.
+
+Notifications & SSE
+
+This project includes a small notification system used by the dashboards (barangay, staff, head). New files/endpoints added:
+
+- `notifications.php` — CRUD endpoint (creates table if needed) for notifications.
+- `notifications_list.php` — returns recent notifications plus `unread_count` for the logged-in user's role/user_id. Accepts `limit` and `since_id`.
+- `notifications_stream.php` — Server-Sent Events (SSE) endpoint that streams newly inserted notifications to authenticated clients. It filters by the PHP session `role` or `user_id`.
+- `notifications_mark_read.php` — mark a notification as read.
+
+How it works (quick)
+
+1. Client posts a new notification to `notifications.php` (e.g., the Barangay dashboard posts when a request is submitted). The endpoint inserts into the DB and returns the inserted `id`.
+2. `notifications_stream.php` polls for new rows and emits SSE `notification` events to connected, authenticated clients.
+3. Dashboards open an EventSource to `notifications_stream.php` and refresh or append notifications when events arrive. They can also call `notifications_list.php` to fetch a recent list and unread count.
+
+Testing realtime notifications
+
+1. Ensure Apache/PHP is running and you have a logged-in session in the browser (login via `login.html`).
+2. Open the target dashboard(s): `barangay-dashboard.html`, `staff-dashboard.html`, `head-dashboard.html`.
+3. Submit a new request from the barangay dashboard. Check the Network tab for the POST to `notifications.php` (should return JSON with `id`).
+4. Other dashboards (staff/head) should receive the notification without manual refresh; if not, check the browser console and Apache error logs.
+
+Troubleshooting
+
+- If SSE appears not to deliver: ensure any reverse-proxy or load balancer is not buffering the SSE response. SSE requires the server to stream events unbuffered.
+- The SSE endpoint uses PHP sessions. Ensure EventSource connections include cookies (same-origin) — cross-origin setups require careful CORS and credentials handling.
+- For heavier load, consider swapping the polling SSE for a Redis pub/sub or WebSocket server for scalability.
+
+If you want, I can add a test script to POST a notification and show the returned DB id, or add a small admin UI for creating test notifications.

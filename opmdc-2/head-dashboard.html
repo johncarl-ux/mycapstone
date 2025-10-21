@@ -8,6 +8,26 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
+        /* Logo formal and clean - shared style with other dashboards */
+        .logo-formal {
+            width: 7rem;
+            height: 7rem;
+            border-radius: 9999px;
+            background: #fff;
+            display: block;
+            object-fit: cover;
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 0.75rem;
+            border: 2px solid #e5e7eb;
+            animation: logo-pop 420ms ease-out both;
+        }
+
+        @keyframes logo-pop {
+            0% { transform: translateY(8px) scale(0.96); opacity: 0; }
+            60% { transform: translateY(-2px) scale(1.02); opacity: 1; }
+            100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
         .page-content {
             display: none;
         }
@@ -18,13 +38,16 @@
         /* simple table styling for inserted descriptive section */
         .desc-table td, .desc-table th { padding: 6px 8px; border-bottom: 1px solid #f3f4f6; }
         .desc-summary { color:#374151; margin-bottom:8px }
+        /* reveal CSS moved to assets/ui-animations.css */
     </style>
+    <link rel="stylesheet" href="assets/ui-animations.css">
 </head>
 <body class="bg-gray-100">
 
     <div class="flex h-screen overflow-hidden">
-        <aside class="w-64 bg-slate-800 text-white flex flex-col">
+    <aside class="sidebar w-64 bg-slate-800 text-white flex flex-col" data-reveal="sidebar">
             <div class="p-6 text-center border-b border-gray-700">
+                <img src="assets/image1.png" alt="Mabini Seal" class="logo-formal">
                 <h2 class="text-xl font-semibold">OPMDC Head</h2>
                 <p class="text-sm text-gray-400">Oversight Panel</p>
             </div>
@@ -56,7 +79,7 @@
             <div class="container mx-auto px-6 py-8">
                 
                 <div id="dashboard" class="page-content" style="display: block;">
-                    <div class="flex items-start justify-between">
+                    <div class="flex items-start justify-between" data-reveal="header">
                         <h3 class="text-3xl font-medium text-gray-700">Dashboard Analytics</h3>
                         <div class="relative">
                             <button id="headNotifBell" title="Notifications" class="relative p-2 rounded-full hover:bg-gray-100 focus:outline-none">
@@ -69,7 +92,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-reveal="group">
                         <div class="bg-white p-6 rounded-lg shadow-md">
                             <h4 class="text-lg font-semibold text-gray-600">Total Submissions</h4>
                             <p class="text-3xl font-bold text-gray-800" id="card-total">142</p>
@@ -205,144 +228,154 @@
         </main>
     </div>
 
+            <script src="assets/ui-animations.js"></script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Mock data
-        const mockData = {
-            opmdcSubmissions: [
-                { name: 'New Road Construction', submitter: 'John Doe', date: '2023-10-26', status: 'Pending' },
-                { name: 'Community Center Upgrade', submitter: 'Jane Smith', date: '2023-10-25', status: 'Approved' },
-            ],
-            opmdcResources: [
-                { project: 'IT Department', budget: '$50,000', personnel: '5', status: 'Ongoing' },
-                { project: 'Roads Project', budget: '$200,000', personnel: '12', status: 'Completed' },
-            ],
-            opmdcPlanning: [
-                { goal: 'Digitize Records', timeframe: 'Q4 2023', kpi: '90% digitized', status: 'On Track' },
-                { goal: 'New Park', timeframe: 'Q1 2024', kpi: 'Land acquired', status: 'Delayed' },
-            ],
-            opmdcPolicies: [
-                { name: 'Data Privacy Policy', status: 'Draft', updated: '2023-10-20' },
-                { name: 'Procurement Guidelines', status: 'Active', updated: '2023-09-15' },
-            ]
-        };
-
-        const loadGenericTable = (dataKey, tableBodyId, rowTemplate) => {
-            const tableBody = document.getElementById(tableBodyId);
-            if (tableBody && mockData[dataKey]) {
-                tableBody.innerHTML = mockData[dataKey].map(rowTemplate).join('');
+        // Populate head dashboard from server API `list_requests.php` and fallback to localStorage when needed.
+        async function loadRequestsAndPopulate() {
+            let requests = [];
+            try {
+                const res = await fetch('list_requests.php', { credentials: 'same-origin' });
+                if (!res.ok) throw new Error('Server response not ok');
+                const data = await res.json();
+                requests = data.requests || [];
+            } catch (err) {
+                // fallback: include localStorage requests if server not available
+                console.warn('Could not load server requests, falling back to localStorage:', err);
+                const local = JSON.parse(localStorage.getItem('opmdcRequests')) || [];
+                // normalize local requests to server shape
+                requests = local.map(r => ({ id: r.id, barangay: r.barangay, request_type: r.requestType, created_at: r.date || new Date().toISOString(), status: r.status || 'Pending', history: r.history || [] }));
             }
-        };
 
-        // Load data into tables
-        loadGenericTable('opmdcSubmissions', 'submissions-table-body', s => `<tr class="border-b hover:bg-gray-50"><td class="py-3 px-4 font-medium">${s.name}</td><td class="py-3 px-4">${s.submitter}</td><td class="py-3 px-4">${s.date}</td><td class="py-3 px-4"><span class="px-2 py-1 text-xs font-semibold rounded-full ${s.status === 'Approved' ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'}">${s.status}</span></td><td class="py-3 px-4"><button class="text-blue-500 hover:underline">View</button></td></tr>`);
-        loadGenericTable('opmdcResources', 'resource-table-body', r => `<tr class="border-b hover:bg-gray-50"><td class="py-3 px-4">${r.project}</td><td class="py-3 px-4">${r.budget}</td><td class="py-3 px-4">${r.personnel}</td><td class="py-3 px-4"><span class="px-2 py-1 text-xs font-semibold rounded-full ${r.status === 'Completed' ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'}">${r.status}</span></td></tr>`);
-        loadGenericTable('opmdcPlanning', 'planning-table-body', p => `<tr class="border-b hover:bg-gray-50"><td class="py-3 px-4 font-medium">${p.goal}</td><td class="py-3 px-4">${p.timeframe}</td><td class="py-3 px-4">${p.kpi}</td><td class="py-3 px-4"><span class="px-2 py-1 text-xs font-semibold rounded-full ${p.status === 'On Track' ? 'bg-blue-200 text-blue-800' : 'bg-red-200 text-red-800'}">${p.status}</span></td></tr>`);
-        loadGenericTable('opmdcPolicies', 'policy-table-body', p => `<tr class="border-b hover:bg-gray-50"><td class="py-3 px-4">${p.name}</td><td class="py-3 px-4">${p.status}</td><td class="py-3 px-4">${p.updated}</td><td class="py-3 px-4"><button class="text-blue-500 hover:underline">Edit</button></td></tr>`);
+            // Update cards
+            const total = requests.length;
+            const approved = requests.filter(r => String(r.status).toLowerCase() === 'approved').length;
+            const declined = requests.filter(r => String(r.status).toLowerCase() === 'declined').length;
+            const pending = total - (approved + declined);
+            document.getElementById('card-total').innerText = total;
+            document.getElementById('card-pending').innerText = pending;
 
-        // Charts
-        const requestCtx = document.getElementById('requestStatusChart')?.getContext('2d');
-        if(requestCtx) {
-            new Chart(requestCtx, {
+            // Active Projects & Registered Users are not part of requests; keep previous placeholders or calculate if you have endpoints
+            // For now, clear or keep existing values — leave as-is
+
+            // Populate submissions table
+            const subBody = document.getElementById('submissions-table-body');
+            if (subBody) {
+                subBody.innerHTML = '';
+                if (requests.length === 0) {
+                    subBody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-4">No submissions found.</td></tr>';
+                } else {
+                    requests.slice(0, 50).forEach(r => {
+                        const tr = document.createElement('tr');
+                        tr.className = 'border-b hover:bg-gray-50';
+                        tr.innerHTML = `<td class="py-3 px-4 font-medium">${escapeHtml(r.request_type || r.title || 'Request')}</td><td class="py-3 px-4">${escapeHtml(r.barangay || r.submitter || '')}</td><td class="py-3 px-4">${new Date(r.created_at).toLocaleDateString()}</td><td class="py-3 px-4">${getStatusLabel(r.status || '')}</td><td class="py-3 px-4"><a class="text-blue-500 hover:underline" href="list_requests.php?id=${encodeURIComponent(r.id)}">View</a></td>`;
+                        subBody.appendChild(tr);
+                    });
+                }
+            }
+
+            // Descriptive analytics: by type + top barangays + review time
+            computeDescriptive(requests);
+
+            // Charts: status distribution
+            renderStatusChart({ approved, pending, declined });
+        }
+
+        function getStatusLabel(s) {
+            const st = String(s || '');
+            if (/approved/i.test(st)) return '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-200 text-green-800">Approved</span>';
+            if (/declined|denied/i.test(st)) return '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-200 text-red-800">Declined</span>';
+            return '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-200 text-yellow-800">'+escapeHtml(st || 'Pending')+'</span>';
+        }
+
+        function computeDescriptive(requests) {
+            const summaryEl = document.getElementById('descSummary');
+            const byType = {};
+            const byBarangay = {};
+            const reviewTimes = [];
+
+            requests.forEach(r => {
+                const type = r.request_type || r.title || 'Unknown';
+                byType[type] = (byType[type] || 0) + 1;
+                const b = r.barangay || 'Unknown';
+                byBarangay[b] = (byBarangay[b] || 0) + 1;
+
+                // compute review time if history contains approved/initial timestamps
+                try {
+                    const hist = r.history || [];
+                    const submitted = new Date(r.created_at || (hist[hist.length-1] && hist[hist.length-1].timestamp) || null);
+                    const approvedEntry = (hist || []).find(h => /approved/i.test(h.status || ''));
+                    if (submitted && approvedEntry) {
+                        const approvedAt = new Date(approvedEntry.timestamp || approvedEntry.date || approvedEntry.created_at || null);
+                        if (!isNaN(submitted.getTime()) && !isNaN(approvedAt.getTime())) {
+                            const mins = Math.round((approvedAt - submitted) / 60000);
+                            if (!isNaN(mins)) reviewTimes.push(mins);
+                        }
+                    }
+                } catch (e) { /* ignore */ }
+            });
+
+            // summary
+            const total = requests.length;
+            summaryEl.innerText = `Showing ${total} submissions`;
+
+            // by type
+            const tbType = document.getElementById('tblByType'); tbType.innerHTML = '';
+            Object.keys(byType).sort((a,b)=> byType[b]-byType[a]).forEach(k => {
+                const cnt = byType[k];
+                const pct = total ? ((cnt/total)*100).toFixed(1) : 0;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${escapeHtml(k)}</td><td style="text-align:right">${cnt}</td><td style="text-align:right">${pct}%</td>`;
+                tbType.appendChild(tr);
+            });
+
+            // top barangays
+            const tbB = document.getElementById('tblTopBarangay'); tbB.innerHTML = '';
+            Object.keys(byBarangay).sort((a,b)=> byBarangay[b]-byBarangay[a]).slice(0,10).forEach(k => {
+                const cnt = byBarangay[k];
+                const pct = total ? ((cnt/total)*100).toFixed(1) : 0;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${escapeHtml(k)}</td><td style="text-align:right">${cnt}</td><td style="text-align:right">${pct}%</td>`;
+                tbB.appendChild(tr);
+            });
+
+            // review time stats
+            const reviewDiv = document.getElementById('reviewStats');
+            if (reviewTimes.length === 0) {
+                reviewDiv.innerText = 'No reviewed proposals in range.';
+            } else {
+                const avg = Math.round(reviewTimes.reduce((a,b)=>a+b,0)/reviewTimes.length);
+                const sorted = reviewTimes.slice().sort((a,b)=>a-b);
+                const median = sorted[Math.floor(sorted.length/2)];
+                const std = Math.round(Math.sqrt(reviewTimes.map(x=>Math.pow(x-avg,2)).reduce((a,b)=>a+b,0)/reviewTimes.length));
+                reviewDiv.innerHTML = `Count: ${reviewTimes.length}<br>Avg: ${avg} min<br>Median: ${median} min<br>Stddev: ${std} min`;
+            }
+        }
+
+        // charts
+        function renderStatusChart({approved, pending, declined}) {
+            const requestCtx = document.getElementById('requestStatusChart')?.getContext('2d');
+            if (!requestCtx || typeof Chart === 'undefined') return;
+            // destroy previous chart instance if any (simple approach)
+            if (window._headRequestChart) { window._headRequestChart.destroy(); }
+            window._headRequestChart = new Chart(requestCtx, {
                 type: 'doughnut',
                 data: {
                     labels: ['Approved', 'Pending', 'Declined'],
-                    datasets: [{
-                        data: [85, 12, 3],
-                        backgroundColor: ['#4CAF50', '#FFC107', '#F44336'],
-                    }]
+                    datasets: [{ data: [approved, pending, declined], backgroundColor: ['#4CAF50', '#FFC107', '#F44336'] }]
                 },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { position: 'top' },
-                        title: { display: true, text: 'Request Status Distribution' }
-                    }
-                }
+                options: { responsive: true, plugins: { legend: { position: 'top' }, title: { display: true, text: 'Request Status Distribution' } } }
             });
         }
 
-        const accountCtx = document.getElementById('accountStatusChart')?.getContext('2d');
-        if(accountCtx) {
-            new Chart(accountCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Barangay Official', 'OPMDC Staff', 'OPMDC Head'],
-                    datasets: [{
-                        label: 'Active Accounts',
-                        data: [50, 35, 4],
-                        backgroundColor: '#3B82F6',
-                    }]
-                },  
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false },
-                        title: { display: true, text: 'Account Status by Role' }
-                    },
-                    scales: { y: { beginAtZero: true } }
-                }
-            });
-        }
+        // small helper: HTML-escape
+        function escapeHtml(s) { return String(s || '').replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]; }); }
 
-        // Load descriptive analytics (tries API, falls back to mock)
-        async function loadDescriptive() {
-            const summaryEl = document.getElementById('descSummary');
-            try {
-                const res = await fetch('get_descriptive.php');
-                if (!res.ok) throw new Error('API not available');
-                const data = await res.json();
-                summaryEl.innerText = data.summary || 'No summary available.';
-
-                // by type
-                const tbType = document.getElementById('tblByType');
-                tbType.innerHTML = '';
-                (data.by_type || []).forEach(r => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `<td>${r.type || '-'}</td><td style="text-align:right">${r.count}</td><td style="text-align:right">${r.pct}%</td>`;
-                    tbType.appendChild(tr);
-                });
-
-                // top barangays
-                const tbB = document.getElementById('tblTopBarangay');
-                tbB.innerHTML = '';
-                (data.top_barangays || []).forEach(r => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `<td>${r.barangay}</td><td style="text-align:right">${r.count}</td><td style="text-align:right">${r.pct}%</td>`;
-                    tbB.appendChild(tr);
-                });
-
-                // review time
-                const rt = data.review_time || {};
-                const reviewDiv = document.getElementById('reviewStats');
-                if (rt.count && rt.count > 0) {
-                    reviewDiv.innerHTML = `Count: ${rt.count}<br>Avg: ${rt.avg_minutes} min<br>Median: ${rt.median_minutes} min<br>Stddev: ${rt.stddev_minutes} min<br>Mode (approx): ${rt.mode_minutes} min`;
-                } else {
-                    reviewDiv.innerText = 'No reviewed proposals in range.';
-                }
-
-                // update cards if data available
-                if (typeof data.total !== 'undefined') document.getElementById('card-total').innerText = data.total;
-                if (typeof data.status_counts !== 'undefined') {
-                    const pending = data.total - (data.status_counts.approved + data.status_counts.denied || 0);
-                    document.getElementById('card-pending').innerText = pending;
-                }
-
-            } catch (err) {
-                // fallback: show sample descriptive info if API not present
-                summaryEl.innerText = 'Could not reach analytics API — showing sample data.';
-                const sampleByType = [{type:'CLUP',count:70,pct:49.3},{type:'CDP',count:45,pct:31.7},{type:'AIP',count:27,pct:19.0}];
-                const tbType = document.getElementById('tblByType'); tbType.innerHTML = '';
-                sampleByType.forEach(r => { const tr = document.createElement('tr'); tr.innerHTML = `<td>${r.type}</td><td style="text-align:right">${r.count}</td><td style="text-align:right">${r.pct}%</td>`; tbType.appendChild(tr); });
-                const sampleTop = [{barangay:'Laurel',count:34,pct:23.9},{barangay:'Poblacion',count:28,pct:19.7},{barangay:'Bulacan',count:18,pct:12.7}];
-                const tbB = document.getElementById('tblTopBarangay'); tbB.innerHTML = '';
-                sampleTop.forEach(r => { const tr = document.createElement('tr'); tr.innerHTML = `<td>${r.barangay}</td><td style="text-align:right">${r.count}</td><td style="text-align:right">${r.pct}%</td>`; tbB.appendChild(tr); });
-                document.getElementById('reviewStats').innerText = 'Sample — Avg: 180 min, Median: 120 min';
-            }
-        }
-
-        // initial descriptive load (after charts)
-        loadDescriptive();
+        // initial load
+        loadRequestsAndPopulate();
+        // refresh periodically
+        setInterval(loadRequestsAndPopulate, 60_000);
     });
 
     function showPage(pageId) {

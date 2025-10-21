@@ -26,16 +26,27 @@
             }
             /* Logo formal and clean */
             .logo-formal {
-                width: 7rem;
-                height: 7rem;
+                width: 6.5rem;
+                height: 6.5rem;
                 border-radius: 9999px;
                 background: #fff;
                 display: block;
                 object-fit: cover;
                 margin-left: auto;
                 margin-right: auto;
-                margin-bottom: 0.75rem;
-                border: 2px solid #e5e7eb;
+                margin-bottom: 0.9rem;
+                border: 2px solid #e6eef8; /* subtle blue tint */
+                box-shadow: 0 6px 18px rgba(14, 45, 80, 0.06); /* softer shadow */
+                padding: 4px;
+                transition: transform 0.18s ease, box-shadow 0.18s ease;
+                animation: logo-pop 420ms ease-out both;
+            }
+            .logo-formal:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 12px 28px rgba(14,45,80,0.08); }
+
+            @keyframes logo-pop {
+                0% { transform: translateY(8px) scale(0.96); opacity: 0; }
+                60% { transform: translateY(-2px) scale(1.02); opacity: 1; }
+                100% { transform: translateY(0) scale(1); opacity: 1; }
             }
     body {
       font-family: 'Inter', sans-serif;
@@ -103,12 +114,16 @@
     .modal-backdrop {
         transition: opacity 0.3s ease-out;
     }
-  </style>
+        /* Sidebar slide/fade animation */
+        /* reveal CSS moved to assets/ui-animations.css */
+    </style>
+    <link rel="stylesheet" href="assets/ui-animations.css">
+    </style>
 </head>
 <body class="bg-slate-50">
 
-  <div class="flex h-screen">
-    <aside class="w-64 bg-gray-800 text-white flex flex-col">
+    <div class="flex h-screen">
+    <aside class="sidebar w-64 bg-gray-800 text-white flex flex-col" aria-hidden="false" data-reveal="sidebar">
       <div class="p-6 text-center border-b border-gray-700">
     <img src="assets/image1.png" alt="Mabini Seal" class="logo-formal">
         <h2 class="text-xl font-semibold">OPMDC Staff</h2>
@@ -140,8 +155,8 @@
       </div>
     </aside>
 
-    <div class="flex-1 flex flex-col overflow-hidden">
-      <header class="bg-white shadow-md p-4">
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <header class="bg-white shadow-md p-4" data-reveal="header">
         <div class="flex items-center justify-between">
           <div>
             <h1 id="main-content-title" class="text-2xl font-bold text-gray-800">Dashboard</h1>
@@ -181,7 +196,7 @@
         <div id="dashboard-view" class="view">
           <div class="container mx-auto">
             <h3 class="text-xl font-semibold text-gray-700 mb-4">Activity Reports & Accounts Overview</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" data-reveal="group">
                                 <div class="card-pop flex flex-col items-start p-6">
                                     <div class="flex items-center mb-2">
                                         <i class="fas fa-file-alt text-blue-600 text-3xl mr-3"></i>
@@ -370,6 +385,9 @@
                 <h2 class="text-2xl font-bold text-gray-800">Proposal Details</h2>
                 <button id="closeDetailModalBtn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
             </div>
+
+                            <!-- staged reveal JS moved to assets/ui-animations.js -->
+                            <script src="assets/ui-animations.js"></script>
             <div class="flex-grow overflow-y-auto pr-4">
                 <div class="grid grid-cols-2 gap-4 mb-6">
                     <div><p class="font-semibold text-gray-700">Project Title:</p><p id="detail-title"></p></div>
@@ -501,7 +519,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const createAccountForm = document.getElementById('createBarangayAccountForm');
     
     // --- Initial setup ---
-    seedInitialData(); 
+    // Load real data from server (falls back to localStorage when server not available)
+    fetchServerData();
     
     // --- Event Listeners ---
     sidebarLinks.forEach(link => {
@@ -640,11 +659,27 @@ function renderAllViews() {
 }
 
 function renderDashboardUI() {
-    const proposals = JSON.parse(localStorage.getItem('opmdcProposals')) || [];
+    // Prefer server-provided data if available (populated by fetchServerData()); otherwise use localStorage
+    const proposals = (window._serverProposals && Array.isArray(window._serverProposals)) ? window._serverProposals : (JSON.parse(localStorage.getItem('opmdcProposals')) || []);
+    const serverRequests = (window._serverRequests && Array.isArray(window._serverRequests)) ? window._serverRequests : null;
+    const localRequests = JSON.parse(localStorage.getItem('opmdcRequests')) || [];
     const accounts = JSON.parse(localStorage.getItem('barangayAccounts')) || [];
-    
-    document.getElementById('total-requests-stat').textContent = proposals.length;
-    document.getElementById('pending-requests-stat').textContent = proposals.filter(r => r.status === 'For Review' || r.status === 'Processing').length;
+
+    // If serverRequests exist, include them; otherwise merge proposals + local requests as before
+    let totalRequestsCount = 0;
+    let pendingCount = 0;
+    if (serverRequests) {
+        totalRequestsCount = serverRequests.length;
+        pendingCount = serverRequests.filter(r => /pending|for review|processing/i.test(r.status || '')).length;
+    } else {
+        totalRequestsCount = proposals.length + localRequests.length;
+        const proposalsPending = proposals.filter(r => /For Review|Processing/i.test(r.status)).length;
+        const localPending = localRequests.filter(r => /Pending|For Review|Processing/i.test(r.status || '')).length;
+        pendingCount = proposalsPending + localPending;
+    }
+
+    document.getElementById('total-requests-stat').textContent = totalRequestsCount;
+    document.getElementById('pending-requests-stat').textContent = pendingCount;
     document.getElementById('total-accounts-stat').textContent = accounts.length;
     document.getElementById('pending-accounts-stat').textContent = accounts.filter(a => a.status === 'pending').length;
 }
@@ -683,8 +718,21 @@ function renderAccountsTable() {
 
 
 function renderRequestsTable() {
-    // This table shows a summary of recent proposals from the main list.
-    const requests = JSON.parse(localStorage.getItem('opmdcProposals')) || [];
+    // This table shows a summary of recent proposals and barangay requests.
+    // Prefer server-provided requests (window._serverRequests) when available
+    const serverRequests = (window._serverRequests && Array.isArray(window._serverRequests)) ? window._serverRequests : null;
+    const proposals = (window._serverProposals && Array.isArray(window._serverProposals)) ? window._serverProposals : (JSON.parse(localStorage.getItem('opmdcProposals')) || []);
+    const localRequests = JSON.parse(localStorage.getItem('opmdcRequests')) || [];
+
+    let requests = [];
+    if (serverRequests) {
+        // normalize serverRequests to a common shape
+        requests = serverRequests.map(r => ({ id: r.id, barangay: r.barangay, title: r.request_type || r.title || 'Barangay Request', date: r.created_at || r.date || new Date().toISOString(), status: r.status || 'Pending' }));
+    } else {
+        // Normalize local requests to the proposals shape and merge with local proposals
+        const mappedLocal = localRequests.map(r => ({ id: r.id, barangay: r.barangay, title: r.requestType || 'Barangay Request', date: r.date || r.date_submitted || new Date().toISOString(), status: r.status || 'Pending', isLocal: true }));
+        requests = proposals.concat(mappedLocal);
+    }
     const tableBody = document.getElementById('requests-table-body');
     if (!tableBody) return;
     tableBody.innerHTML = '';
@@ -694,17 +742,18 @@ function renderRequestsTable() {
         return;
     }
     
-    // Show top 5 most recent
+    // Show top 5 most recent (by date)
+    requests.sort((a,b)=> new Date(a.date) - new Date(b.date));
     requests.slice(-5).reverse().forEach((req, index) => {
         const row = `
             <tr class="border-b ${index % 2 === 1 ? 'even:bg-slate-50' : ''}">
                 <td class="py-4 px-4">${req.id}</td>
                 <td class="py-4 px-4">${req.barangay}</td>
-                <td class="py-4 px-4">Project Proposal</td>
+                <td class="py-4 px-4">${escapeHtml(req.title || (req.requestType || 'Proposal'))}</td>
                 <td class="py-4 px-4">${new Date(req.date).toLocaleDateString()}</td>
                 <td class="py-4 px-4">${getStatusBadge(req.status)}</td>
                 <td class="py-4 px-4">
-                     <button class="action-btn btn-details" onclick="openProposalDetails('${req.id}')">View</button>
+                     <a class="action-btn btn-details" href="list_requests.php?id=${encodeURIComponent(req.id)}">View</a>
                 </td>
             </tr>
         `;
@@ -712,10 +761,14 @@ function renderRequestsTable() {
     });
 }
 
+// Re-render when local requests change (from barangay dashboard)
+window.addEventListener('storage', function(e){ if (e.key === 'opmdcRequests') renderRequestsTable(); });
+
 function renderProposalsPage() {
     const proposalsManagementTableBody = document.getElementById('proposals-management-table-body');
     if (!proposalsManagementTableBody) return;
-    let proposals = JSON.parse(localStorage.getItem('opmdcProposals')) || [];
+    // prefer server-provided proposals when available
+    let proposals = (window._serverProposals && Array.isArray(window._serverProposals)) ? window._serverProposals.slice() : (JSON.parse(localStorage.getItem('opmdcProposals')) || []);
     
     const statusFilter = document.getElementById('statusFilter').value;
     const typeFilter = document.getElementById('typeFilter').value;
@@ -773,32 +826,38 @@ function updateTime() {
     dateElement.textContent = new Date().toLocaleDateString('en-US', options);
 }
 
-function seedInitialData() {
-    if (!localStorage.getItem('opmdcAccounts')) {
-        const opmdcAccounts = [
-            { name: 'John Doe', username: 'staff', password: 'password', role: 'OPMDC Staff', status: 'active' },
-            { name: 'Jane Smith', username: 'head', password: 'password', role: 'OPMDC Head', status: 'active' },
-        ];
-        localStorage.setItem('opmdcAccounts', JSON.stringify(opmdcAccounts));
+// Fetch server-side data and cache it for rendering; fall back to localStorage if server unavailable.
+async function fetchServerData() {
+    // fetch requests (server-side)
+    try {
+        const res = await fetch('list_requests.php', { credentials: 'same-origin' });
+        if (res.ok) {
+            const data = await res.json();
+            window._serverRequests = data.requests || [];
+        }
+    } catch (e) {
+        console.warn('list_requests.php not available', e);
+        window._serverRequests = null;
     }
 
-    if (!localStorage.getItem('barangayAccounts')) {
-        const barangayAccounts = [
-            { barangayName: 'Poblacion', representative: 'Juan Dela Cruz', username: 'poblacion', password: 'password', role: 'Barangay Official', status: 'approved' },
-            { barangayName: 'San Jose', representative: 'Maria Clara', username: 'sanjose', password: 'password', role: 'Barangay Official', status: 'approved' },
-            { barangayName: 'Pansol', representative: 'Jose Rizal', username: 'pansol', password: 'password', role: 'Barangay Official', status: 'pending' },
-        ];
-        localStorage.setItem('barangayAccounts', JSON.stringify(barangayAccounts));
+    // fetch staff proposals (if available)
+    try {
+        const res2 = await fetch('list_staff_proposals.php', { credentials: 'same-origin' });
+        if (res2.ok) {
+            const d2 = await res2.json();
+            // expect { proposals: [...] } or { success: true, proposals: [...] }
+            window._serverProposals = d2.proposals || d2 || [];
+        }
+    } catch (e) {
+        console.warn('list_staff_proposals.php not available', e);
+        window._serverProposals = null;
     }
-    
-    if (!localStorage.getItem('opmdcProposals')) {
-        const mockProposals = [
-            { id: 1, title: 'Community Garden Initiative', barangay: 'Poblacion', date: '2025-09-10', status: 'For Review', lastUpdated: '2025-09-10', history: [{status: 'For Review', date: '2025-09-10', user: 'Barangay', remarks: 'Initial submission.'}]},
-            { id: 2, title: 'Youth Sports Program', barangay: 'San Jose', date: '2025-09-08', status: 'Processing', lastUpdated: '2025-09-11', history: [{status: 'For Review', date: '2025-09-08', user: 'Barangay'}, {status: 'Processing', date: '2025-09-11', user: 'Staff', remarks: 'Initial review complete.'}]},
-            { id: 3, title: 'Waste Management Seminar', barangay: 'Anilao East', date: '2025-09-05', status: 'Approved', lastUpdated: '2025-09-12', history: [{status: 'For Review', date: '2025-09-05', user: 'Barangay'}, {status: 'Processing', date: '2025-09-09', user: 'Staff'}, {status: 'Approved', date: '2025-09-12', user: 'Head', remarks: 'All requirements met.'}]}
-        ];
-        localStorage.setItem('opmdcProposals', JSON.stringify(mockProposals));
-    }
+
+    // re-render views now that server data may be available
+    if (typeof renderAllViews === 'function') renderAllViews();
+
+    // refresh periodically
+    setTimeout(fetchServerData, 60000);
 }
 
 function showAlert(title, message, callback) {
@@ -852,8 +911,9 @@ function deleteAccount(username) {
 
 function openProposalDetails(proposalId) {
     const proposalDetailModal = document.getElementById('proposalDetailModal');
-    const proposals = JSON.parse(localStorage.getItem('opmdcProposals')) || [];
-    const proposal = proposals.find(p => p.id == proposalId);
+    // prefer server-provided proposals when available
+    const proposals = (window._serverProposals && Array.isArray(window._serverProposals)) ? window._serverProposals : (JSON.parse(localStorage.getItem('opmdcProposals')) || []);
+    const proposal = proposals.find(p => String(p.id) == String(proposalId));
     if (!proposal) return;
 
     document.getElementById('proposalId').value = proposal.id;
@@ -884,20 +944,38 @@ function openProposalDetails(proposalId) {
 }
 
 function updateProposalStatus(proposalId, newStatus, remarks) {
-    let proposals = JSON.parse(localStorage.getItem('opmdcProposals')) || [];
-    const proposalIndex = proposals.findIndex(p => p.id == proposalId);
-    if (proposalIndex !== -1) {
-        proposals[proposalIndex].status = newStatus;
-        proposals[proposalIndex].lastUpdated = new Date().toISOString().split('T')[0];
-        proposals[proposalIndex].history.push({
-            status: newStatus,
-            date: new Date().toISOString(),
-            user: 'Staff',
-            remarks: remarks || 'Status updated.'
-        });
-        localStorage.setItem('opmdcProposals', JSON.stringify(proposals));
-        renderAllViews();
-    }
+    // Try server-side update first, if available
+    fetch('update_proposal.php', { method: 'POST', body: new URLSearchParams({ id: proposalId, status: newStatus, remarks: remarks || '' }), credentials: 'same-origin' })
+    .then(r => r.json())
+    .then(d => {
+        if (d && d.success) {
+            // server updated, re-fetch server data later
+            if (typeof fetchServerData === 'function') fetchServerData();
+            renderAllViews();
+            return;
+        }
+        // fallback to localStorage
+        let proposals = JSON.parse(localStorage.getItem('opmdcProposals')) || [];
+        const proposalIndex = proposals.findIndex(p => p.id == proposalId);
+        if (proposalIndex !== -1) {
+            proposals[proposalIndex].status = newStatus;
+            proposals[proposalIndex].lastUpdated = new Date().toISOString().split('T')[0];
+            proposals[proposalIndex].history.push({ status: newStatus, date: new Date().toISOString(), user: 'Staff', remarks: remarks || 'Status updated.' });
+            localStorage.setItem('opmdcProposals', JSON.stringify(proposals));
+            renderAllViews();
+        }
+    }).catch(err => {
+        // fallback to localStorage when server unavailable
+        let proposals = JSON.parse(localStorage.getItem('opmdcProposals')) || [];
+        const proposalIndex = proposals.findIndex(p => p.id == proposalId);
+        if (proposalIndex !== -1) {
+            proposals[proposalIndex].status = newStatus;
+            proposals[proposalIndex].lastUpdated = new Date().toISOString().split('T')[0];
+            proposals[proposalIndex].history.push({ status: newStatus, date: new Date().toISOString(), user: 'Staff', remarks: remarks || 'Status updated.' });
+            localStorage.setItem('opmdcProposals', JSON.stringify(proposals));
+            renderAllViews();
+        }
+    });
 }
 
 /* --- Manage My Submissions (staff) --- */
@@ -906,8 +984,10 @@ function loadMyProposals() {
     fetch('list_staff_proposals.php')
     .then(r => r.json())
     .then(data => {
-        if (data.success && Array.isArray(data.proposals)) {
+        if (data && Array.isArray(data.proposals)) {
             renderMyProposalsTable(data.proposals);
+        } else if (Array.isArray(data)) {
+            renderMyProposalsTable(data);
         } else {
             // Fallback to localStorage
             const local = JSON.parse(localStorage.getItem('opmdcProposals')) || [];
@@ -950,7 +1030,8 @@ function openEditSubmission(proposalId) {
     .then(r => r.json())
     .then(data => {
         let proposal = null;
-        if (data.success && data.proposals && data.proposals.length) proposal = data.proposals[0];
+        if (data && data.proposals && Array.isArray(data.proposals) && data.proposals.length) proposal = data.proposals[0];
+        if (!proposal && Array.isArray(data) && data.length) proposal = data[0];
         if (!proposal) {
             const local = JSON.parse(localStorage.getItem('opmdcProposals')) || [];
             proposal = local.find(p => p.id == proposalId);
@@ -981,28 +1062,49 @@ document.getElementById('editSubmissionForm') && document.getElementById('editSu
     fetch('update_proposal.php', { method: 'POST', body: new URLSearchParams(payload) })
     .then(r => r.json())
     .then(data => {
-        if (data.success) {
+        if (data && data.success) {
             showAlert('Success', 'Proposal updated and resubmitted.');
             closeModal('editSubmissionModal');
-            // update localStorage fallback
-            let proposals = JSON.parse(localStorage.getItem('opmdcProposals')) || [];
-            const idx = proposals.findIndex(p => p.id == payload.id);
-            if (idx !== -1) {
-                proposals[idx].title = payload.title;
-                proposals[idx].description = payload.description;
-                proposals[idx].budget = payload.budget;
-                proposals[idx].attachment = payload.attachment;
-                proposals[idx].lastUpdated = new Date().toISOString().split('T')[0];
-                proposals[idx].status = 'For Head Approval';
-                proposals[idx].history = proposals[idx].history || [];
-                proposals[idx].history.push({ status: 'For Head Approval', date: new Date().toISOString(), user: 'Barangay', remarks: 'Resubmitted after edits.' });
-                localStorage.setItem('opmdcProposals', JSON.stringify(proposals));
-            }
+            if (typeof fetchServerData === 'function') fetchServerData();
             renderAllViews();
-        } else {
-            showAlert('Error', data.message || 'Failed to update proposal.');
+            return;
         }
-    }).catch(err => { console.error(err); showAlert('Error', 'Server error'); });
+        // fallback: update localStorage so UI reflects change
+        let proposals = JSON.parse(localStorage.getItem('opmdcProposals')) || [];
+        const idx = proposals.findIndex(p => p.id == payload.id);
+        if (idx !== -1) {
+            proposals[idx].title = payload.title;
+            proposals[idx].description = payload.description;
+            proposals[idx].budget = payload.budget;
+            proposals[idx].attachment = payload.attachment;
+            proposals[idx].lastUpdated = new Date().toISOString().split('T')[0];
+            proposals[idx].status = 'For Head Approval';
+            proposals[idx].history = proposals[idx].history || [];
+            proposals[idx].history.push({ status: 'For Head Approval', date: new Date().toISOString(), user: 'Barangay', remarks: 'Resubmitted after edits.' });
+            localStorage.setItem('opmdcProposals', JSON.stringify(proposals));
+        }
+        closeModal('editSubmissionModal');
+        renderAllViews();
+    }).catch(err => {
+        console.error(err);
+        showAlert('Warning', 'Server error — changes saved locally.');
+        // save local fallback
+        let proposals = JSON.parse(localStorage.getItem('opmdcProposals')) || [];
+        const idx = proposals.findIndex(p => p.id == payload.id);
+        if (idx !== -1) {
+            proposals[idx].title = payload.title;
+            proposals[idx].description = payload.description;
+            proposals[idx].budget = payload.budget;
+            proposals[idx].attachment = payload.attachment;
+            proposals[idx].lastUpdated = new Date().toISOString().split('T')[0];
+            proposals[idx].status = 'For Head Approval';
+            proposals[idx].history = proposals[idx].history || [];
+            proposals[idx].history.push({ status: 'For Head Approval', date: new Date().toISOString(), user: 'Barangay', remarks: 'Resubmitted after edits.' });
+            localStorage.setItem('opmdcProposals', JSON.stringify(proposals));
+        }
+        closeModal('editSubmissionModal');
+        renderAllViews();
+    });
 });
 
 // --- Server notifications (runs after DOM is ready) ---

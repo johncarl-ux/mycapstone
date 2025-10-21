@@ -26,3 +26,20 @@ INSERT INTO users (username, email, password, name, role, barangayName, status) 
 
 -- The hash above corresponds to the plaintext password: password
 
+-- requests table: stores requests submitted by barangays for staff/head review
+DROP TABLE IF EXISTS requests;
+CREATE TABLE requests (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  barangay VARCHAR(255) NOT NULL,
+  request_type VARCHAR(255) NOT NULL,
+  urgency VARCHAR(50) DEFAULT 'Medium',
+  location VARCHAR(255) DEFAULT NULL,
+  description TEXT,
+  email VARCHAR(255) DEFAULT NULL,
+  notes TEXT DEFAULT NULL,
+  attachment VARCHAR(255) DEFAULT NULL,
+  status ENUM('Pending','Approved','Declined') NOT NULL DEFAULT 'Pending',
+  history JSON DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
