@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OPMDC Staff Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
+<<<<<<< HEAD
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -42,6 +43,34 @@
                 animation: logo-pop 420ms ease-out both;
             }
             .logo-formal:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 12px 28px rgba(14,45,80,0.08); }
+=======
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <div class="max-w-6xl mx-auto p-6">
+    <header class="mb-6 flex items-center justify-between">
+      <h1 class="text-2xl font-bold">OPMDC Staff Dashboard</h1>
+      <div class="flex items-center space-x-4">
+        <div class="relative">
+          <button id="staffNotifBell" title="Notifications" class="relative p-2 rounded hover:bg-gray-100 focus:outline-none">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-gray-700">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V8.25A6.75 6.75 0 004.5 8.25v1.5a8.967 8.967 0 01-2.31 6.022c1.733.64 3.56 1.085 5.454 1.31m7.213 0a24.255 24.255 0 01-7.213 0m7.213 0a3 3 0 11-7.213 0" />
+            </svg>
+            <span id="staffNotifBadge" class="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-500 hidden"></span>
+          </button>
+          <div id="staffNotifDropdown" class="hidden absolute right-0 mt-2 bg-white border rounded shadow w-80 z-40">
+            <div class="p-3 border-b flex items-center justify-between">
+              <strong>Notifications</strong>
+              <button id="staffMarkAllRead" class="text-xs text-blue-600 hover:underline">Mark all read</button>
+            </div>
+            <div id="staffNotifList" class="max-h-64 overflow-auto p-2">
+              <div class="text-center text-gray-500">No notifications.</div>
+            </div>
+          </div>
+        </div>
+        <a href="login.html" class="text-sm text-gray-600">Logout</a>
+      </div>
+    </header>
+>>>>>>> 996c8d0d135fff7224812be0b39c025218bf85f0
 
             @keyframes logo-pop {
                 0% { transform: translateY(8px) scale(0.96); opacity: 0; }
@@ -1199,5 +1228,104 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
+<<<<<<< HEAD
+=======
+    // initial load
+    fetchRequests();
+
+    // --- Staff notifications (role-based) ---
+    const staffBell = document.getElementById('staffNotifBell');
+    const staffBadge = document.getElementById('staffNotifBadge');
+    const staffDropdown = document.getElementById('staffNotifDropdown');
+    const staffList = document.getElementById('staffNotifList');
+    const staffMarkAllRead = document.getElementById('staffMarkAllRead');
+
+    async function fetchStaffNotifs() {
+      try {
+        const res = await fetch('notifications.php?role=' + encodeURIComponent('OPMDC Staff'), { credentials: 'same-origin' });
+        if (!res.ok) throw new Error('Failed');
+        const data = await res.json();
+        renderStaffNotifs(data.notifications || []);
+      } catch (e) {
+        staffList.innerHTML = '<div class="text-center text-gray-500">Could not load notifications</div>';
+      }
+    }
+
+    function renderStaffNotifs(notes) {
+      if (!notes.length) {
+        staffList.innerHTML = '<div class="text-center text-gray-500">No notifications.</div>';
+        staffBadge.classList.add('hidden');
+        return;
+      }
+      let unread = 0;
+      const html = notes.slice(0, 50).map(n => {
+        if (!parseInt(n.is_read)) unread++;
+        return `
+          <div class="flex items-start justify-between p-2 rounded hover:bg-gray-50 ${parseInt(n.is_read)?'':'bg-blue-50'}">
+            <div class="pr-2">
+              <div class="text-sm font-medium text-gray-800">${escapeHtml(n.title)}</div>
+              <div class="text-xs text-gray-600 mt-1">${escapeHtml(n.body)}</div>
+              <div class="text-[11px] text-gray-400 mt-1">${new Date(n.created_at).toLocaleString()}</div>
+            </div>
+            <div class="flex flex-col items-end ml-2 space-y-1">
+              <button data-id="${n.id}" class="mark-read text-[11px] text-blue-600">${parseInt(n.is_read)?'Unread':'Mark read'}</button>
+              <button data-id="${n.id}" class="delete text-[11px] text-red-600">Delete</button>
+            </div>
+          </div>`;
+      }).join('');
+      staffList.innerHTML = html;
+      if (unread > 0) staffBadge.classList.remove('hidden'); else staffBadge.classList.add('hidden');
+      // bind buttons
+      staffList.querySelectorAll('.mark-read').forEach(btn => btn.addEventListener('click', async (e) => {
+        const id = e.target.getAttribute('data-id');
+        await fetch('notifications_mark_read.php?id=' + encodeURIComponent(id), { method: 'POST', credentials: 'same-origin' });
+        fetchStaffNotifs();
+      }));
+      staffList.querySelectorAll('.delete').forEach(btn => btn.addEventListener('click', async (e) => {
+        const id = e.target.getAttribute('data-id');
+        await fetch('notifications_delete.php?id=' + encodeURIComponent(id), { method: 'POST', credentials: 'same-origin' });
+        fetchStaffNotifs();
+      }));
+    }
+
+    staffBell && staffBell.addEventListener('click', (e) => {
+      e.stopPropagation();
+      staffDropdown.classList.toggle('hidden');
+      if (!staffDropdown.classList.contains('hidden')) fetchStaffNotifs();
+    });
+    document.addEventListener('click', () => { if (!staffDropdown.classList.contains('hidden')) staffDropdown.classList.add('hidden'); });
+    staffMarkAllRead && staffMarkAllRead.addEventListener('click', async () => {
+      const res = await fetch('notifications.php?role=' + encodeURIComponent('OPMDC Staff'), { credentials: 'same-origin' });
+      const data = await res.json();
+      for (const n of data.notifications || []) {
+        await fetch('notifications_mark_read.php?id=' + encodeURIComponent(n.id), { method: 'POST', credentials: 'same-origin' });
+      }
+      fetchStaffNotifs();
+    });
+
+    // Realtime updates via SSE so staff sees new items instantly
+    (function startStaffSSE(){
+      try {
+        const last = parseInt(localStorage.getItem('opmdcStaffLastNotifId')||'0',10) || 0;
+        const es = new EventSource('notifications_stream.php?last_id=' + last);
+        es.addEventListener('notification', (e) => {
+          try {
+            const data = JSON.parse(e.data);
+            const id = parseInt(data.id||0,10);
+            if (id) localStorage.setItem('opmdcStaffLastNotifId', String(id));
+            // show badge and refresh list if open
+            staffBadge && staffBadge.classList.remove('hidden');
+            if (staffDropdown && !staffDropdown.classList.contains('hidden')) {
+              fetchStaffNotifs();
+            }
+          } catch(err) { /* ignore */ }
+        });
+        es.addEventListener('error', () => {
+          // Let browser handle reconnection automatically; no-op
+        });
+      } catch(err) { /* SSE not supported */ }
+    })();
+  </script>
+>>>>>>> 996c8d0d135fff7224812be0b39c025218bf85f0
 </body>
 </html>
