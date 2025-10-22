@@ -12,12 +12,16 @@ CREATE TABLE users (
   email VARCHAR(255) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
-  role ENUM('Barangay Official','OPMDC Staff','OPMDC Head') NOT NULL DEFAULT 'OPMDC Staff',
+  role ENUM('Barangay Official','OPMDC Staff','OPMDC Head','Admin') NOT NULL DEFAULT 'OPMDC Staff',
   barangayName VARCHAR(255) DEFAULT NULL,
   status ENUM('pending','approved','active','disabled') NOT NULL DEFAULT 'approved',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 2bf233230a850e84e8fbd2264d0c2cc8e7fbcbd5
 -- requests table: stores requests submitted by barangays for staff/head review
 DROP TABLE IF EXISTS requests;
 CREATE TABLE requests (

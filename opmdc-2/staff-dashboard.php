@@ -2,7 +2,7 @@
 // staff-dashboard.php - simple UI for OPMDC Staff to review requests
 // Require session-based login and allow only staff/head roles
 session_start();
-$allowed = ['OPMDC Staff', 'OPMDC Head'];
+$allowed = ['OPMDC Staff', 'OPMDC Head', 'Admin'];
 $user = $_SESSION['user'] ?? null;
 if (! $user || ! in_array($user['role'] ?? '', $allowed, true)) {
   // redirect to login page (same-origin)
