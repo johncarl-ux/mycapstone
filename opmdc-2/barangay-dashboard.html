@@ -290,6 +290,7 @@
                       <label for="requestType" class="block text-gray-700 text-sm font-bold mb-2">Request Type:</label>
                       <select id="requestType" name="requestType" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
                           <option value="">Select a type</option>
+              <option value="Automated Document Request">Automated Document Request</option>
                           <option value="Barangay Clearance">Barangay Clearance</option>
                           <option value="Certificate of Residency">Certificate of Residency</option>
                           <option value="Incident Report">Incident Report</option>
@@ -314,16 +315,12 @@
                   <label for="description" class="block text-gray-700 text-sm font-bold mb-2">Description of Request:</label>
                   <textarea id="description" name="description" rows="3" placeholder="Provide a detailed description of your request..." class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required></textarea>
               </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                      <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email Address:</label>
-                      <input type="email" id="email" name="email" placeholder="you@example.com" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-                  </div>
-                  <div>
-                      <label for="attachment" class="block text-gray-700 text-sm font-bold mb-2">Attachment:</label>
-                      <input type="file" id="attachment" name="attachment" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
-                  </div>
-              </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div class="md:col-span-1">
+            <label for="attachment" class="block text-gray-700 text-sm font-bold mb-2">Attachment:</label>
+            <input type="file" id="attachment" name="attachment" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+          </div>
+        </div>
               <div class="mb-6">
                   <label for="notes" class="block text-gray-700 text-sm font-bold mb-2">Additional Notes <span class="font-normal text-gray-500">(Optional)</span>:</label>
                   <textarea id="notes" name="notes" rows="2" placeholder="Any other information..." class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
@@ -457,7 +454,7 @@
         urgency: document.getElementById('urgencyLevel').value,
         location: document.getElementById('location').value,
         description: document.getElementById('description').value,
-        email: document.getElementById('email').value,
+  // email removed from form
         notes: document.getElementById('notes').value,
         attachment: attachmentInput.files.length > 0 ? attachmentInput.files[0].name : 'No file attached',
         date: new Date().toISOString(),
@@ -482,7 +479,7 @@
       formData.append('urgency', newRequest.urgency);
       formData.append('location', newRequest.location);
       formData.append('description', newRequest.description);
-      formData.append('email', newRequest.email);
+  // email removed from form
       formData.append('notes', newRequest.notes);
       if (attachmentInput.files.length > 0) formData.append('attachment', attachmentInput.files[0]);
 
@@ -500,7 +497,7 @@
           }
 
           // send notifications to staff and head (best-effort)
-          const basePayload = { title: 'New Request', body: `${newRequest.requestType} submitted by ${currentUserBarangay} (${newRequest.email})` };
+          const basePayload = { title: 'New Request', body: `${newRequest.requestType} submitted by ${currentUserBarangay}` };
           try {
             // notify OPMDC Staff
             let payload = Object.assign({}, basePayload, { target_role: 'OPMDC Staff' });
@@ -518,7 +515,7 @@
             }
           } catch (err) {
             console.warn('Notification send failed', err);
-            addNotification('New Request', `${newRequest.requestType} submitted by ${currentUserBarangay} (${newRequest.email})`);
+            addNotification('New Request', `${newRequest.requestType} submitted by ${currentUserBarangay}`);
           }
 
         } catch (err) {

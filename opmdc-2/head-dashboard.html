@@ -428,6 +428,26 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', () => headDropdown.classList.add('hidden'));
     headMarkAllRead && headMarkAllRead.addEventListener('click', async () => { const res = await fetch('notifications.php?role=' + encodeURIComponent('OPMDC Head')); const data = await res.json(); for (const n of data.notifications || []) { await fetch('notifications_mark_read.php?id=' + encodeURIComponent(n.id), { method: 'POST' }); } fetchHeadNotifs(); });
 
+        // Realtime notifications via SSE for Head role
+        (function startHeadSSE(){
+            try {
+                const last = parseInt(localStorage.getItem('opmdcHeadLastNotifId')||'0',10) || 0;
+                const es = new EventSource('notifications_stream.php?last_id=' + last);
+                es.addEventListener('notification', (e) => {
+                    try {
+                        const data = JSON.parse(e.data);
+                        const id = parseInt(data.id||0,10);
+                        if (id) localStorage.setItem('opmdcHeadLastNotifId', String(id));
+                        headBadge && headBadge.classList.remove('hidden');
+                        if (headDropdown && !headDropdown.classList.contains('hidden')) {
+                            fetchHeadNotifs();
+                        }
+                    } catch(err) {}
+                });
+                es.addEventListener('error', () => { /* browser auto-reconnects */ });
+            } catch (err) { /* SSE unsupported */ }
+        })();
+
     function escapeHtml(s) { return String(s).replace(/[&<>\"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
 
     fetchHeadNotifs();

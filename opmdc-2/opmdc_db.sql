@@ -18,14 +18,6 @@ CREATE TABLE users (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Example accounts (password: password)
-INSERT INTO users (username, email, password, name, role, barangayName, status) VALUES
-('admin','admin@example.com','$2y$10$KbQiC0dJZ2g0Y5sQqzQeUuW9b5nQe9y5Wv0dK1u6k9P0F7ZVgX9Wy','OPMDC Admin','OPMDC Head',NULL,'approved'),
-('staff','staff@example.com','$2y$10$KbQiC0dJZ2g0Y5sQqzQeUuW9b5nQe9y5Wv0dK1u6k9P0F7ZVgX9Wy','OPMDC Staff','OPMDC Staff',NULL,'approved'),
-('brgy1','brgy1@example.com','$2y$10$KbQiC0dJZ2g0Y5sQqzQeUuW9b5nQe9y5Wv0dK1u6k9P0F7ZVgX9Wy','Barangay Official 1','Barangay Official','Barangay 1','approved');
-
--- The hash above corresponds to the plaintext password: password
-
 -- requests table: stores requests submitted by barangays for staff/head review
 DROP TABLE IF EXISTS requests;
 CREATE TABLE requests (
@@ -42,4 +34,27 @@ CREATE TABLE requests (
   history JSON DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- notifications table: role- and user-targeted alerts streamed via SSE
+DROP TABLE IF EXISTS notifications;
+CREATE TABLE notifications (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  body TEXT NOT NULL,
+  target_role VARCHAR(64) DEFAULT NULL,
+  target_user_id BIGINT UNSIGNED DEFAULT NULL,
+  created_by BIGINT UNSIGNED DEFAULT NULL,
+  created_by_role VARCHAR(64) DEFAULT NULL,
+  is_read TINYINT(1) DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_target_role (target_role),
+  KEY idx_target_user_id (target_user_id),
+  KEY idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Helpful indexes for requests
+ALTER TABLE requests
+  ADD KEY idx_requests_status (status),
+  ADD KEY idx_requests_created_at (created_at),
+  ADD KEY idx_requests_barangay (barangay);
 
