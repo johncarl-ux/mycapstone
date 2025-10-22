@@ -21,7 +21,7 @@ $check->bind_param('i', $id);
 $check->execute();
 $res = $check->get_result()->fetch_assoc();
 $createdBy = $res['created_by'] ?? 0;
-if (!in_array($userRole, ['OPMDC Staff','OPMDC Head']) && intval($createdBy) !== intval($userId)) {
+if (!in_array($userRole, ['OPMDC Staff','OPMDC Head','Admin']) && intval($createdBy) !== intval($userId)) {
     http_response_code(403); echo json_encode(['error'=>'Forbidden']); exit;
 }
 

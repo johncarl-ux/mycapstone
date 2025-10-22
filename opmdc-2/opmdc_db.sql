@@ -12,19 +12,12 @@ CREATE TABLE users (
   email VARCHAR(255) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
-  role ENUM('Barangay Official','OPMDC Staff','OPMDC Head') NOT NULL DEFAULT 'OPMDC Staff',
+  role ENUM('Barangay Official','OPMDC Staff','OPMDC Head','Admin') NOT NULL DEFAULT 'OPMDC Staff',
   barangayName VARCHAR(255) DEFAULT NULL,
   status ENUM('pending','approved','active','disabled') NOT NULL DEFAULT 'approved',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Example accounts (password: password)
-INSERT INTO users (username, email, password, name, role, barangayName, status) VALUES
-('admin','admin@example.com','$2y$10$KbQiC0dJZ2g0Y5sQqzQeUuW9b5nQe9y5Wv0dK1u6k9P0F7ZVgX9Wy','OPMDC Admin','OPMDC Head',NULL,'approved'),
-('staff','staff@example.com','$2y$10$KbQiC0dJZ2g0Y5sQqzQeUuW9b5nQe9y5Wv0dK1u6k9P0F7ZVgX9Wy','OPMDC Staff','OPMDC Staff',NULL,'approved'),
-('brgy1','brgy1@example.com','$2y$10$KbQiC0dJZ2g0Y5sQqzQeUuW9b5nQe9y5Wv0dK1u6k9P0F7ZVgX9Wy','Barangay Official 1','Barangay Official','Barangay 1','approved');
-
--- The hash above corresponds to the plaintext password: password
 
 -- requests table: stores requests submitted by barangays for staff/head review
 DROP TABLE IF EXISTS requests;
