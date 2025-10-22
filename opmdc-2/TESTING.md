@@ -16,7 +16,7 @@ Local testing steps for OPMDC request flow
      - admin / password (role: OPMDC Head)
 
 4) Submit a request as a Barangay Official
-   - Login as a barangay user (e.g., brgy1 / password) and open `barangay-dashboard.html`.
+   - Login as a barangay user (e.g., brgy1 / password) and open `barangay-dashboard.php`.
    - Click New Request and submit the form (you may include an attachment).
    - Confirm the request appears locally in the dashboard and in the DB `requests` table.
 

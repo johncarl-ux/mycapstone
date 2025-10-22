@@ -60,7 +60,7 @@ How it works (quick)
 Testing realtime notifications
 
 1. Ensure Apache/PHP is running and you have a logged-in session in the browser (login via `login.html`).
-2. Open the target dashboard(s): `barangay-dashboard.html`, `staff-dashboard.html`, `head-dashboard.html`.
+2. Open the target dashboard(s): `barangay-dashboard.php`, `staff-dashboard.php`, `head-dashboard.php`.
 3. Submit a new request from the barangay dashboard. Check the Network tab for the POST to `notifications.php` (should return JSON with `id`).
 4. Other dashboards (staff/head) should receive the notification without manual refresh; if not, check the browser console and Apache error logs.
 

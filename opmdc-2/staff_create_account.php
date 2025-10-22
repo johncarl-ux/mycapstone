@@ -14,7 +14,7 @@ $username = trim($_POST['username'] ?? '');
 $email = trim($_POST['email'] ?? '');
 $password = $_POST['password'] ?? '';
 $name = trim($_POST['name'] ?? '');
-$role = $_POST['role'] ?? 'Barangay Official';
+$role = 'Barangay Official'; // force role to Barangay Official for staff-created accounts
 $barangayName = trim($_POST['barangayName'] ?? '') ?: null;
 
 if (!$username || !$email || !$password || !$name) {
@@ -46,9 +46,17 @@ $status = 'approved'; // Staff-created accounts are auto-approved
 $stmt = $mysqli->prepare('INSERT INTO users (username,email,password,name,role,barangayName,status) VALUES (?,?,?,?,?,?,?)');
 $stmt->bind_param('sssssss', $username, $email, $hash, $name, $role, $barangayName, $status);
 if ($stmt->execute()) {
-    echo json_encode(['success'=>true]);
+    $newId = $stmt->insert_id;
+    $stmt->close();
+    // fetch created row
+    $g = $mysqli->prepare('SELECT id, username, email, name AS representative, barangayName, role, status, created_at FROM users WHERE id = ? LIMIT 1');
+    $g->bind_param('i', $newId);
+    $g->execute();
+    $res = $g->get_result();
+    $user = $res->fetch_assoc();
+    $g->close();
+    echo json_encode(['success'=>true,'user'=>$user]);
 } else {
     echo json_encode(['success'=>false,'message'=>'Failed to create account']);
 }
-$stmt->close();
 $mysqli->close();

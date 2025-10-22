@@ -59,6 +59,47 @@ if (! $stmt->execute()) {
     exit;
 }
 
+// Best-effort: notify the barangay user (if any) that their request changed status
+try {
+    // get barangay name for the request
+    $q = $mysqli->prepare('SELECT barangay FROM requests WHERE id = ? LIMIT 1');
+    if ($q) {
+        $q->bind_param('i', $id);
+        $q->execute();
+        $rr = $q->get_result()->fetch_assoc();
+        $q->close();
+        $barangayName = $rr['barangay'] ?? null;
+    } else {
+        $barangayName = null;
+    }
+
+    $targetUserId = null;
+    if ($barangayName) {
+        $q2 = $mysqli->prepare("SELECT id FROM users WHERE role = 'Barangay Official' AND barangayName = ? LIMIT 1");
+        if ($q2) {
+            $q2->bind_param('s', $barangayName);
+            $q2->execute();
+            $r2 = $q2->get_result()->fetch_assoc();
+            $q2->close();
+            $targetUserId = $r2['id'] ?? null;
+        }
+    }
+
+    $title = 'Request Update';
+    $body = "Request #{$id} status changed to {$newStatus} by {$actor}";
+    if ($ins = $mysqli->prepare('INSERT INTO notifications (title, body, target_role, target_user_id, created_by, created_by_role) VALUES (?,?,?,?,?,?)')) {
+        $createdBy = $sessionUser['id'] ?? null;
+        $createdByRole = $sessionUser['role'] ?? null;
+        $targetRole = null; // prefer targeting specific user id
+        $targetUserParam = $targetUserId ? intval($targetUserId) : null;
+        $ins->bind_param('sssiis', $title, $body, $targetRole, $targetUserParam, $createdBy, $createdByRole);
+        @$ins->execute();
+        $ins->close();
+    }
+} catch (Exception $e) {
+    // ignore notification errors
+}
+
 echo json_encode(['id' => $id, 'status' => $newStatus, 'history' => $history]);
 exit;
 ?>

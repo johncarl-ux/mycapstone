@@ -8,7 +8,7 @@ $mysqli = require __DIR__ . '/db.php';
 $role = $_GET['role'] ?? null; // optional: OPMDC Staff or OPMDC Head or Barangay Official
 $barangay = $_GET['barangay'] ?? null; // optional filter
 
-$sql = "SELECT id, barangay, request_type, urgency, location, description, email, notes, attachment, status, history, created_at FROM requests";
+$sql = "SELECT id, request_code, barangay, request_type, urgency, location, description, email, notes, attachment, status, history, created_at FROM requests";
 $conds = [];
 $params = [];
 

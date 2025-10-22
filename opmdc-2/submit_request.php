@@ -37,22 +37,39 @@ if (!empty($_FILES['attachment']) && $_FILES['attachment']['error'] === UPLOAD_E
 }
 
 $history = json_encode([['status' => 'Pending', 'timestamp' => date('c'), 'notes' => 'Submitted by barangay official']]);
+// Ensure request_code column exists (unique 4-digit public code)
+$mysqli->query("ALTER TABLE requests ADD COLUMN IF NOT EXISTS request_code VARCHAR(8) NULL UNIQUE;");
 
-$stmt = $mysqli->prepare("INSERT INTO requests (barangay, request_type, urgency, location, description, email, notes, attachment, history) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+// generate a unique 4-digit numeric code
+$requestCode = null;
+for ($i = 0; $i < 8; $i++) {
+    $candidate = strval(rand(1000, 9999));
+    $chk = $mysqli->prepare('SELECT id FROM requests WHERE request_code = ? LIMIT 1');
+    if ($chk) {
+        $chk->bind_param('s', $candidate);
+        $chk->execute();
+        $reschk = $chk->get_result();
+        if ($reschk->num_rows === 0) { $requestCode = $candidate; $chk->close(); break; }
+        $chk->close();
+    }
+}
+if ($requestCode === null) $requestCode = strval(rand(1000, 9999));
+
+$stmt = $mysqli->prepare("INSERT INTO requests (barangay, request_type, urgency, location, description, email, notes, attachment, history, request_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 if (! $stmt) {
     http_response_code(500);
     echo json_encode(['error' => 'Prepare failed', 'details' => $mysqli->error]);
     exit;
 }
-$stmt->bind_param('sssssssss', $barangay, $requestType, $urgency, $location, $description, $email, $notes, $attachmentFilename, $history);
+$stmt->bind_param('ssssssssss', $barangay, $requestType, $urgency, $location, $description, $email, $notes, $attachmentFilename, $history, $requestCode);
 if (! $stmt->execute()) {
     http_response_code(500);
     echo json_encode(['error' => 'Execute failed', 'details' => $stmt->error]);
     exit;
 }
 
-$newId = $stmt->insert_id;
-$stmt->close();
+ $newId = $stmt->insert_id;
+ $stmt->close();
 
 // --- Best-effort: create notifications for staff and head so connected clients get informed ---
 try {
@@ -80,6 +97,29 @@ try {
     // ignore notification failures - response should still succeed
 }
 
-echo json_encode(['id' => $newId, 'status' => 'Pending']);
+// Attempt to fetch the newly inserted row and return it as canonical object
+$resp = null;
+try {
+    $sel = $mysqli->prepare("SELECT id, request_code, barangay, request_type, urgency, location, description, email, notes, attachment, status, history, created_at FROM requests WHERE id = ? LIMIT 1");
+    if ($sel) {
+        $sel->bind_param('i', $newId);
+        $sel->execute();
+        $res = $sel->get_result();
+        if ($row = $res->fetch_assoc()) {
+            // decode history JSON
+            $row['history'] = json_decode($row['history'], true) ?: [];
+            $resp = $row;
+        }
+        $sel->close();
+    }
+} catch (Exception $e) {
+    // ignore read-back errors
+}
+
+if ($resp) {
+    echo json_encode(['success' => true, 'request' => $resp]);
+} else {
+    echo json_encode(['success' => true, 'id' => $newId, 'status' => 'Pending']);
+}
 exit;
 ?>
