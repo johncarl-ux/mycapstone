@@ -5,45 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OPMDC Staff Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-<<<<<<< HEAD
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-        /* Formal pop effect for dashboard cards */
-        .card-pop {
-            transition: transform 0.18s cubic-bezier(.4,2,.6,1), box-shadow 0.18s, border-color 0.18s;
-            box-shadow: 0 2px 12px 0 rgba(59,130,246,0.10), 0 1px 4px 0 rgba(0,0,0,0.06);
-            border: 2px solid #e0e7ef;
-            border-radius: 1rem;
-            background: #fff;
-        }
-            .card-pop:hover {
-                transform: translateY(-4px) scale(1.035);
-                box-shadow: 0 8px 32px 0 rgba(59,130,246,0.13), 0 3px 12px 0 rgba(0,0,0,0.10);
-                border-color: #fbfbfc;
-                background: #fff;
-            }
-            /* Logo formal and clean */
-            .logo-formal {
-                width: 6.5rem;
-                height: 6.5rem;
-                border-radius: 9999px;
-                background: #fff;
-                display: block;
-                object-fit: cover;
-                margin-left: auto;
-                margin-right: auto;
-                margin-bottom: 0.9rem;
-                border: 2px solid #e6eef8; /* subtle blue tint */
-                box-shadow: 0 6px 18px rgba(14, 45, 80, 0.06); /* softer shadow */
-                padding: 4px;
-                transition: transform 0.18s ease, box-shadow 0.18s ease;
-                animation: logo-pop 420ms ease-out both;
-            }
-            .logo-formal:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 12px 28px rgba(14,45,80,0.08); }
-=======
 </head>
 <body class="bg-gray-100 min-h-screen">
   <div class="max-w-6xl mx-auto p-6">
@@ -70,7 +31,6 @@
         <a href="login.html" class="text-sm text-gray-600">Logout</a>
       </div>
     </header>
->>>>>>> 996c8d0d135fff7224812be0b39c025218bf85f0
 
             @keyframes logo-pop {
                 0% { transform: translateY(8px) scale(0.96); opacity: 0; }
