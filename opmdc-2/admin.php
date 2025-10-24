@@ -1,14 +1,13 @@
 <?php
-session_start();
+// Open access: remove server-side restrictions so the page loads from login routing
+// session_start(); // optional; not required now
 
 $mysqli = require __DIR__ . '/db.php';
 
-// Restrict access
-if (!isset($_SESSION['user']) || (!in_array($_SESSION['user']['role'] ?? '', ['Admin','OPMDC Head'], true))) {
-  http_response_code(403);
-  echo 'Access denied. Admins only.';
-  exit;
-}
+// Keep no-cache headers to avoid stale views
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
 
 $message = '';
 $errors = [];
@@ -47,7 +46,7 @@ $mysqli->close();
       <div class="flex gap-2 items-center">
         <input id="searchBox" type="text" placeholder="Search users..." class="px-3 py-2 border rounded w-64" />
         <a href="register.php" class="px-3 py-2 bg-blue-600 text-white rounded">Create new</a>
-        <a href="staff-dashboard.php" class="px-3 py-2 bg-gray-200 rounded">Back</a>
+  <a href="login.html" class="px-3 py-2 bg-gray-200 rounded">Logout</a>
       </div>
     </div>
 

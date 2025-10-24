@@ -1,11 +1,11 @@
 <?php
-session_start();
+// Open access: remove server-side restrictions to allow editing UI to load (per no-auth requirement)
+// session_start(); // optional
 
-if (!isset($_SESSION['user']) || !in_array($_SESSION['user']['role'] ?? '', ['OPMDC Head','Admin'], true)) {
-  http_response_code(403);
-  echo 'Access denied.';
-  exit;
-}
+// Prevent caching so protected content isn't shown after logout via back button
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
 
 $userId = isset($_GET['user_id']) ? (int)$_GET['user_id'] : 0;
 if ($userId <= 0) {

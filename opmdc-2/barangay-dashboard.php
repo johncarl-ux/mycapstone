@@ -361,26 +361,13 @@
 
         // --- Authentication & Initialization ---
     async function initializeDashboard() {
-      // Try to get authoritative user data from server session first
-      try {
-        const res = await fetch('me.php', { credentials: 'same-origin' });
-        if (!res.ok) throw new Error('Not authenticated');
-        const data = await res.json();
-        if (data && data.success && data.user) {
-          loggedInUser = data.user;
-        }
-      } catch (err) {
-        // Fallback to client-side stored user if server session not available
-        try { loggedInUser = JSON.parse(localStorage.getItem('loggedInUser')); } catch(e) { loggedInUser = null; }
+      // Skip server authentication; allow open access with defaults
+      try { loggedInUser = JSON.parse(localStorage.getItem('loggedInUser')); } catch(e) { loggedInUser = null; }
+      if (!loggedInUser) {
+        loggedInUser = { name: 'Official', role: 'Barangay Official', barangayName: 'Barangay Name' };
       }
 
-      if (!loggedInUser || loggedInUser.role !== 'Barangay Official') {
-        alert('Access denied. Please login as a Barangay Official.');
-        window.location.href = 'login.html';
-        return;
-      }
-
-  currentUserBarangay = loggedInUser.barangayName || loggedInUser.barangay || 'Barangay Name';
+      currentUserBarangay = loggedInUser.barangayName || loggedInUser.barangay || 'Barangay Name';
 
       // Update UI with user info
   document.getElementById('barangay-name-header').textContent = currentUserBarangay;

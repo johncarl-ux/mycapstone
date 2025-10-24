@@ -22,10 +22,10 @@
       background-position: center;
       filter: blur(4px);
       transform: scale(1.05);
-      /* New background animation */
+      /* Subtle background animation */
       animation: zoomInBackground 30s infinite alternate;
     }
-    
+
     /* Keyframes for animations */
     @keyframes zoomInBackground {
       from { transform: scale(1.05); }
@@ -36,38 +36,10 @@
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    
-    /* New shake animation for login errors */
-    @keyframes shake {
-      10%, 90% { transform: translateX(-1px); }
-      20%, 80% { transform: translateX(2px); }
-      30%, 50%, 70% { transform: translateX(-4px); }
-      40%, 60% { transform: translateX(4px); }
-    }
 
-    /* Animation utility classes */
     .animate-fade-in-up {
       animation: fadeInUp 0.7s ease-out forwards;
       opacity: 0; /* Start hidden */
-    }
-    
-    .animate-shake {
-        animation: shake 0.6s cubic-bezier(.36,.07,.19,.97) both;
-    }
-    
-    /* Styling for the loading spinner */
-    .loader {
-      border: 2px solid #f3f3f3;
-      border-top: 2px solid #3498db;
-      border-radius: 50%;
-      width: 1.25rem; /* 20px */
-      height: 1.25rem; /* 20px */
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
     }
   </style>
 </head>
@@ -97,27 +69,24 @@
                 <p class="mt-2 text-gray-500">Welcome! Please sign in.</p>
             </div>
             
-            <form id="loginForm" class="mt-8 space-y-6" method="post" action="authenticate.php">
+            <form id="loginForm" class="mt-8 space-y-6" method="post" action="#">
               <div class="animate-fade-in-up" style="animation-delay: 0.4s;">
                 <label for="credential" class="text-sm font-medium text-gray-700">Username or Email</label>
                 <input type="text" id="credential" name="credential" placeholder="Enter your username or email" required class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
               </div>
-              
+
               <div class="animate-fade-in-up" style="animation-delay: 0.5s;">
                 <label for="password" class="text-sm font-medium text-gray-700">Password</label>
                 <input type="password" id="password" name="password" placeholder="Enter your password" required class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
               </div>
-              
+
               <div class="text-right animate-fade-in-up" style="animation-delay: 0.6s;">
-                <a href="#" class="text-sm font-medium text-blue-600 hover:underline">
-                  Forgot Password?
-                </a>
+                <a href="#" class="text-sm font-medium text-blue-600 hover:underline">Forgot Password?</a>
               </div>
-              
+
               <div class="animate-fade-in-up" style="animation-delay: 0.7s;">
-                <button id="submit-button" type="submit" class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all transform hover:scale-105 disabled:bg-blue-400 disabled:scale-100">
-                  <span class="button-text">Sign in</span>
-                  <div class="loader hidden"></div>
+                <button id="submit-button" type="submit" class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                  Sign in
                 </button>
               </div>
             </form>
@@ -133,71 +102,31 @@
               LALAWIGAN NG BATANGAS
             </p>
           </div>
-
+  <script>
+    // Client-only routing: no server authentication
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('loginForm');
+      const credInput = document.getElementById('credential');
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const v = (credInput.value || '').toLowerCase();
+        if (v.includes('admin')) {
+          window.location.href = 'admin.php';
+        } else if (v.includes('head')) {
+          window.location.href = 'head-dashboard.php';
+        } else if (v.includes('staff')) {
+          window.location.href = 'staff-dashboard.php';
+        } else {
+          window.location.href = 'barangay-dashboard.php';
+        }
+      });
+    });
+  </script>
         </div>
     </div>
     
   </main>
-
-  <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const loginForm = document.getElementById("loginForm");
-    const loginCard = document.getElementById("login-card");
-    const submitButton = loginForm.querySelector("button[type='submit']");
-    const buttonText = submitButton.querySelector(".button-text");
-    const loader = submitButton.querySelector(".loader");
-
-    loginForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-
-      buttonText.classList.add("hidden");
-      loader.classList.remove("hidden");
-      submitButton.disabled = true;
-
-      const formData = new FormData(loginForm);
-
-      setTimeout(() => {
-        fetch(loginForm.action, {
-          method: 'POST',
-          body: formData,
-          headers: { 'Accept': 'application/json' }
-        }).then(r => r.json()).then(data => {
-          if (data.success) {
-            switch (data.role) {
-              case 'Barangay Official':
-                window.location.href = 'barangay-dashboard.php';
-                break;
-              case 'OPMDC Staff':
-                window.location.href = 'staff-dashboard.php';
-                break;
-              case 'OPMDC Head':
-                window.location.href = 'head-dashboard.php';
-                break;
-              case 'Admin':
-                window.location.href = 'admin.php';
-                break;
-              default:
-                window.location.href = 'index.html';
-            }
-          } else {
-            loginCard.classList.add('animate-shake');
-            alert(data.message || 'Invalid credentials or account not approved.');
-            buttonText.classList.remove('hidden');
-            loader.classList.add('hidden');
-            submitButton.disabled = false;
-            setTimeout(() => loginCard.classList.remove('animate-shake'), 600);
-          }
-        }).catch(err => {
-          console.error(err);
-          alert('Server error');
-          buttonText.classList.remove('hidden');
-          loader.classList.add('hidden');
-          submitButton.disabled = false;
-        });
-      }, 600);
-    });
-  });
-  </script>
+  
   
 </body>
 </html>
