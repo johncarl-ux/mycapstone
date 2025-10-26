@@ -1367,5 +1367,104 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
+<<<<<<< HEAD
+=======
+    // initial load
+    fetchRequests();
+
+    // --- Staff notifications (role-based) ---
+    const staffBell = document.getElementById('staffNotifBell');
+    const staffBadge = document.getElementById('staffNotifBadge');
+    const staffDropdown = document.getElementById('staffNotifDropdown');
+    const staffList = document.getElementById('staffNotifList');
+    const staffMarkAllRead = document.getElementById('staffMarkAllRead');
+
+    async function fetchStaffNotifs() {
+      try {
+        const res = await fetch('notifications.php?role=' + encodeURIComponent('OPMDC Staff'), { credentials: 'same-origin' });
+        if (!res.ok) throw new Error('Failed');
+        const data = await res.json();
+        renderStaffNotifs(data.notifications || []);
+      } catch (e) {
+        staffList.innerHTML = '<div class="text-center text-gray-500">Could not load notifications</div>';
+      }
+    }
+
+    function renderStaffNotifs(notes) {
+      if (!notes.length) {
+        staffList.innerHTML = '<div class="text-center text-gray-500">No notifications.</div>';
+        staffBadge.classList.add('hidden');
+        return;
+      }
+      let unread = 0;
+      const html = notes.slice(0, 50).map(n => {
+        if (!parseInt(n.is_read)) unread++;
+        return `
+          <div class="flex items-start justify-between p-2 rounded hover:bg-gray-50 ${parseInt(n.is_read)?'':'bg-blue-50'}">
+            <div class="pr-2">
+              <div class="text-sm font-medium text-gray-800">${escapeHtml(n.title)}</div>
+              <div class="text-xs text-gray-600 mt-1">${escapeHtml(n.body)}</div>
+              <div class="text-[11px] text-gray-400 mt-1">${new Date(n.created_at).toLocaleString()}</div>
+            </div>
+            <div class="flex flex-col items-end ml-2 space-y-1">
+              <button data-id="${n.id}" class="mark-read text-[11px] text-blue-600">${parseInt(n.is_read)?'Unread':'Mark read'}</button>
+              <button data-id="${n.id}" class="delete text-[11px] text-red-600">Delete</button>
+            </div>
+          </div>`;
+      }).join('');
+      staffList.innerHTML = html;
+      if (unread > 0) staffBadge.classList.remove('hidden'); else staffBadge.classList.add('hidden');
+      // bind buttons
+      staffList.querySelectorAll('.mark-read').forEach(btn => btn.addEventListener('click', async (e) => {
+        const id = e.target.getAttribute('data-id');
+        await fetch('notifications_mark_read.php?id=' + encodeURIComponent(id), { method: 'POST', credentials: 'same-origin' });
+        fetchStaffNotifs();
+      }));
+      staffList.querySelectorAll('.delete').forEach(btn => btn.addEventListener('click', async (e) => {
+        const id = e.target.getAttribute('data-id');
+        await fetch('notifications_delete.php?id=' + encodeURIComponent(id), { method: 'POST', credentials: 'same-origin' });
+        fetchStaffNotifs();
+      }));
+    }
+
+    staffBell && staffBell.addEventListener('click', (e) => {
+      e.stopPropagation();
+      staffDropdown.classList.toggle('hidden');
+      if (!staffDropdown.classList.contains('hidden')) fetchStaffNotifs();
+    });
+    document.addEventListener('click', () => { if (!staffDropdown.classList.contains('hidden')) staffDropdown.classList.add('hidden'); });
+    staffMarkAllRead && staffMarkAllRead.addEventListener('click', async () => {
+      const res = await fetch('notifications.php?role=' + encodeURIComponent('OPMDC Staff'), { credentials: 'same-origin' });
+      const data = await res.json();
+      for (const n of data.notifications || []) {
+        await fetch('notifications_mark_read.php?id=' + encodeURIComponent(n.id), { method: 'POST', credentials: 'same-origin' });
+      }
+      fetchStaffNotifs();
+    });
+
+    // Realtime updates via SSE so staff sees new items instantly
+    (function startStaffSSE(){
+      try {
+        const last = parseInt(localStorage.getItem('opmdcStaffLastNotifId')||'0',10) || 0;
+        const es = new EventSource('notifications_stream.php?last_id=' + last);
+        es.addEventListener('notification', (e) => {
+          try {
+            const data = JSON.parse(e.data);
+            const id = parseInt(data.id||0,10);
+            if (id) localStorage.setItem('opmdcStaffLastNotifId', String(id));
+            // show badge and refresh list if open
+            staffBadge && staffBadge.classList.remove('hidden');
+            if (staffDropdown && !staffDropdown.classList.contains('hidden')) {
+              fetchStaffNotifs();
+            }
+          } catch(err) { /* ignore */ }
+        });
+        es.addEventListener('error', () => {
+          // Let browser handle reconnection automatically; no-op
+        });
+      } catch(err) { /* SSE not supported */ }
+    })();
+  </script>
+>>>>>>> 996c8d0d135fff7224812be0b39c025218bf85f0
 </body>
 </html>
