@@ -48,7 +48,7 @@
     <aside class="sidebar w-64 bg-slate-800 text-white flex flex-col" data-reveal="sidebar">
             <div class="p-6 text-center border-b border-gray-700">
                 <img src="assets/image1.png" alt="Mabini Seal" class="logo-formal">
-                <h2 class="text-xl font-semibold">OPMDC Head</h2>
+                <h2 id="sidebar-role-title" class="text-xl font-semibold">OPMDC Head</h2>
                 <p class="text-sm text-gray-400">Oversight Panel</p>
             </div>
             <nav class="flex-1 p-4 space-y-2">
@@ -230,8 +230,35 @@
 
             <script src="assets/ui-animations.js"></script>
 
+    <!-- Simple Alert/Confirm Modal (shared pattern with Staff) -->
+    <div id="headAlertModal" class="fixed inset-0 z-60 items-center justify-center hidden transition-all duration-300 opacity-0">
+        <div class="fixed inset-0 bg-black bg-opacity-50 modal-backdrop"></div>
+        <div class="bg-white rounded-lg shadow-xl m-auto p-8 w-full max-w-sm z-10 modal-enter">
+            <h2 id="headAlertModalTitle" class="text-xl font-bold text-gray-800 mb-4">Confirm</h2>
+            <p id="headAlertModalMessage" class="text-gray-600 mb-6">Message goes here.</p>
+            <div id="headAlertModalActions" class="flex items-center justify-end"></div>
+        </div>
+    </div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Route guard: ensure only OPMDC Head stays on this page
+        try {
+            const u = JSON.parse(localStorage.getItem('loggedInUser'));
+            if (!u || !u.role) throw new Error('no user');
+            const r = String(u.role);
+            if (/admin/i.test(r)) return (window.location.href = 'admin.php');
+            if (/staff/i.test(r)) return (window.location.href = 'staff-dashboard.php');
+            if (!/head/i.test(r)) return (window.location.href = 'barangay-dashboard.php');
+        } catch (e) { /* ignore */ }
+        // Show logged-in user info from localStorage if present
+        try {
+            const u = JSON.parse(localStorage.getItem('loggedInUser'));
+            if (u && u.role) {
+                const r = document.getElementById('sidebar-role-title');
+                if (r) r.textContent = u.role;
+            }
+        } catch (e) { /* ignore */ }
         // Populate head dashboard from server API `list_requests.php` and fallback to localStorage when needed.
         async function loadRequestsAndPopulate() {
             let requests = [];
@@ -268,10 +295,12 @@
                         const tr = document.createElement('tr');
                         tr.className = 'border-b hover:bg-gray-50';
                         const actions = [];
-                        actions.push(`<a class="text-blue-500 hover:underline" href="list_requests.php?id=${encodeURIComponent(r.id)}">View</a>`);
-                        if (!/approved|declined/i.test(String(r.status || ''))) {
-                            actions.push(`<button class="ml-2 text-sm text-green-600" onclick="confirmUpdateRequestStatus(${r.id}, 'Approved')">Approve</button>`);
+                        const isFinalized = /approved|declined/i.test(String(r.status || ''));
+                        if (!isFinalized) {
+                            actions.push(`<button class="text-sm text-green-600" onclick="confirmUpdateRequestStatus(${r.id}, 'Approved')">Approve</button>`);
                             actions.push(`<button class="ml-2 text-sm text-red-600" onclick="confirmUpdateRequestStatus(${r.id}, 'Declined')">Decline</button>`);
+                        } else {
+                            actions.push(`<button class="text-sm text-red-600" onclick="confirmDeleteRequest(${r.id})">Delete</button>`);
                         }
                         tr.innerHTML = `<td class="py-3 px-4 font-medium">${escapeHtml(r.request_type || r.title || 'Request')}</td><td class="py-3 px-4">${escapeHtml(r.barangay || r.submitter || '')}</td><td class="py-3 px-4">${new Date(r.created_at).toLocaleDateString()}</td><td class="py-3 px-4">${getStatusLabel(r.status || '')}</td><td class="py-3 px-4">${actions.join('')}</td>`;
                         subBody.appendChild(tr);
@@ -284,7 +313,10 @@
 
             // Charts: status distribution
             renderStatusChart({ approved, pending, declined });
-        }
+    }
+
+    // expose for external callers (e.g., SSE handlers)
+    window.loadRequestsAndPopulate = loadRequestsAndPopulate;
 
         function getStatusLabel(s) {
             const st = String(s || '');
@@ -389,11 +421,28 @@
                 if (!res.ok) throw new Error('Network');
                 const d = await res.json();
                 if (d && d.status) {
-                    // refresh view
-                    loadRequestsAndPopulate();
+                    // refresh table
+                    if (typeof window.loadRequestsAndPopulate === 'function') window.loadRequestsAndPopulate();
                     return;
                 }
                 alert('Failed to update request');
+            } catch (err) {
+                console.error(err);
+                alert('Server error');
+            }
+        }
+
+        // Delete a finalized request (Approved/Declined)
+        async function deleteRequest(requestId) {
+            try {
+                const res = await fetch('delete_request.php', { method: 'POST', body: new URLSearchParams({ id: requestId }), credentials: 'same-origin' });
+                if (!res.ok) throw new Error('Network');
+                const d = await res.json();
+                if ((d && d.success) || (d && d.status === 'success') || (d && d.status === true)) {
+                    if (typeof window.loadRequestsAndPopulate === 'function') window.loadRequestsAndPopulate();
+                    return;
+                }
+                alert((d && (d.message || d.error)) ? (d.message || d.error) : 'Failed to delete request');
             } catch (err) {
                 console.error(err);
                 alert('Server error');
@@ -411,10 +460,59 @@
             }
         });
     }
+    // Modal helpers for head confirm/alert
+    function headOpenModal() {
+        const modal = document.getElementById('headAlertModal');
+        modal.style.display = 'flex';
+        modal.classList.remove('opacity-0');
+        modal.classList.add('opacity-100');
+        const content = modal.querySelector('.modal-enter');
+        setTimeout(()=> content && content.classList.add('modal-enter-active'), 10);
+    }
+    function headCloseModal() {
+        const modal = document.getElementById('headAlertModal');
+        const content = modal.querySelector('.modal-enter');
+        modal.classList.remove('opacity-100');
+        modal.classList.add('opacity-0');
+        content && content.classList.remove('modal-enter-active');
+        setTimeout(()=> modal.style.display = 'none', 250);
+    }
+    function showHeadAlert(title, message, cb) {
+        document.getElementById('headAlertModalTitle').textContent = title;
+        document.getElementById('headAlertModalMessage').textContent = message;
+        const actions = document.getElementById('headAlertModalActions');
+        actions.innerHTML = `<button id="headAlertOk" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">OK</button>`;
+        headOpenModal();
+        document.getElementById('headAlertOk').onclick = ()=> { headCloseModal(); if (cb) cb(); };
+    }
+    function showHeadConfirm(title, message, onResult, confirmLabel = 'Confirm', variant = 'primary') {
+        document.getElementById('headAlertModalTitle').textContent = title;
+        document.getElementById('headAlertModalMessage').textContent = message;
+        const actions = document.getElementById('headAlertModalActions');
+        const confirmClasses = variant === 'danger' ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700';
+        actions.innerHTML = `
+            <button id="headConfirmCancel" class="mr-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Cancel</button>
+            <button id="headConfirmOk" class="${confirmClasses} text-white font-bold py-2 px-4 rounded">${confirmLabel}</button>
+        `;
+        headOpenModal();
+        document.getElementById('headConfirmCancel').onclick = ()=> { headCloseModal(); onResult && onResult(false); };
+        document.getElementById('headConfirmOk').onclick = ()=> { headCloseModal(); onResult && onResult(true); };
+    }
+
     // Confirmation wrapper for head approve/decline
     function confirmUpdateRequestStatus(requestId, newStatus) {
-        if (!confirm(`Are you sure you want to mark request ${requestId} as ${newStatus}?`)) return;
-        updateRequestStatus(requestId, newStatus);
+        showHeadConfirm('Confirm Action', `Are you sure you want to mark request ${requestId} as ${newStatus}?`, async (ok) => {
+            if (!ok) return;
+            await updateRequestStatus(requestId, newStatus);
+        }, 'Confirm', 'primary');
+    }
+
+    // Confirmation wrapper for delete
+    function confirmDeleteRequest(requestId) {
+        showHeadConfirm('Confirm Deletion', `Delete request ${requestId}? This cannot be undone.`, async (ok) => {
+            if (!ok) return;
+            await deleteRequest(requestId);
+        }, 'Delete', 'danger');
     }
 
     // SSE listener to refresh dashboard when notifications relevant to Head arrive

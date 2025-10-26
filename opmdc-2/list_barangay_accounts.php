@@ -1,14 +1,7 @@
 <?php
 // list_barangay_accounts.php
-// Returns JSON list of users with role 'Barangay Official'
-session_start();
+// Returns JSON list of users with role 'Barangay Official' (open access per requirements)
 header('Content-Type: application/json');
-
-if (!isset($_SESSION['user']) || !in_array($_SESSION['user']['role'] ?? '', ['OPMDC Staff','OPMDC Head','Admin'], true)) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-    exit;
-}
 
 $mysqli = require __DIR__ . '/db.php';
 

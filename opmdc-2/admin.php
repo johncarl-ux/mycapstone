@@ -37,6 +37,19 @@ $mysqli->close();
   <style>body{font-family:'Poppins',sans-serif}</style>
 </head>
 <body class="bg-gray-100 min-h-screen p-6">
+  <script>
+    // Route guard: only allow Admin; if no user, send to login; other roles to their dashboards
+    (function(){
+      try{
+        const u = JSON.parse(localStorage.getItem('loggedInUser'));
+        if (!u || !u.role) { window.location.href = 'login.html'; return; }
+        const r = String(u.role);
+        if (/head/i.test(r)) { window.location.href = 'head-dashboard.php'; return; }
+        if (/staff/i.test(r)) { window.location.href = 'staff-dashboard.php'; return; }
+        if (!/admin/i.test(r)) { window.location.href = 'barangay-dashboard.php'; return; }
+      }catch(e){ window.location.href = 'login.html'; }
+    })();
+  </script>
   <div class="max-w-6xl mx-auto">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
       <div>

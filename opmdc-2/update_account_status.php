@@ -1,6 +1,5 @@
 <?php
-// update_account_status.php
-session_start();
+// update_account_status.php (open access per requirements)
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -9,11 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-if (!isset($_SESSION['user']) || !in_array($_SESSION['user']['role'] ?? '', ['OPMDC Staff','OPMDC Head','Admin'], true)) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-    exit;
-}
+// no session authorization required
 
 $userId = isset($_POST['user_id']) ? (int)$_POST['user_id'] : 0;
 $newStatus = $_POST['status'] ?? '';

@@ -1,16 +1,11 @@
 <?php
-// delete_request.php - deletes a request if the user is authorized
+// delete_request.php - deletes a request
+// Open access (no server-side session). Only allow delete when status is Approved or Declined.
 header('Content-Type: application/json; charset=utf-8');
-session_start();
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed']);
-    exit;
-}
-
-if (! isset($_SESSION['user'])) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Authentication required']);
     exit;
 }
 
@@ -29,8 +24,8 @@ if ($id <= 0) {
     exit;
 }
 
-// find the request
-$stmt = $mysqli->prepare('SELECT id, barangay, created_at FROM requests WHERE id = ? LIMIT 1');
+// find the request and verify allowed status
+$stmt = $mysqli->prepare('SELECT id, barangay, status FROM requests WHERE id = ? LIMIT 1');
 if (! $stmt) { http_response_code(500); echo json_encode(['error' => 'Prepare failed']); exit; }
 $stmt->bind_param('i', $id);
 $stmt->execute();
@@ -43,17 +38,11 @@ if (! $row) {
     exit;
 }
 
-$user = $_SESSION['user'];
-$role = $user['role'] ?? '';
-$userBarangay = $user['barangayName'] ?? ($user['barangay'] ?? null);
-
-// authorize: allow if staff/head or same barangay
-if (! in_array($role, ['OPMDC Staff', 'OPMDC Head']) ) {
-    if (! $userBarangay || $userBarangay !== $row['barangay']) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Forbidden']);
-        exit;
-    }
+$status = strtolower((string)($row['status'] ?? ''));
+if (!in_array($status, ['approved', 'declined'], true)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Only Approved or Declined requests can be deleted']);
+    exit;
 }
 
 $del = $mysqli->prepare('DELETE FROM requests WHERE id = ?');
@@ -68,5 +57,4 @@ $del->close();
 
 echo json_encode(['success' => true]);
 exit;
-
 ?>

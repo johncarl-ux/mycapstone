@@ -103,21 +103,69 @@
             </p>
           </div>
   <script>
-    // Client-only routing: no server authentication
+    // Client-only routing with user data persisted in localStorage
     document.addEventListener('DOMContentLoaded', () => {
       const form = document.getElementById('loginForm');
       const credInput = document.getElementById('credential');
-      form.addEventListener('submit', (e) => {
+      const passInput = document.getElementById('password');
+
+      function titleCase(s){ return String(s||'').split(/\s+|\.|_|-|@/).filter(Boolean).map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' '); }
+      function deriveNameFromCredential(c){
+        if (!c) return 'User';
+        const at = c.indexOf('@');
+        const base = at>0 ? c.slice(0, at) : c;
+        return titleCase(base.replace(/[\.\-_]/g,' '));
+      }
+      function deriveBarangayFromCredential(c){
+        // naive parse: allow formats like user+BarangayName@domain or user#Barangay
+        const m = String(c||'').match(/[+#](.+?)(?:@|$)/);
+        return m ? titleCase(m[1]) : 'Barangay Name';
+      }
+
+      form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const v = (credInput.value || '').toLowerCase();
-        if (v.includes('admin')) {
-          window.location.href = 'admin.php';
-        } else if (v.includes('head')) {
-          window.location.href = 'head-dashboard.php';
-        } else if (v.includes('staff')) {
-          window.location.href = 'staff-dashboard.php';
-        } else {
-          window.location.href = 'barangay-dashboard.php';
+        const raw = String(credInput.value || '').trim();
+        const pwd = String(passInput.value || '').trim();
+
+        // Secure server-side authentication (username/email + password)
+        try {
+          const resp = await fetch('authenticate.php', {
+            method: 'POST',
+            headers: { 'Accept': 'application/json' },
+            body: new URLSearchParams({ credential: raw, password: pwd })
+          });
+          const data = await resp.json();
+          if (!data || !data.success || !data.user) {
+            alert((data && data.message) ? data.message : 'Invalid username or password.');
+            return;
+          }
+
+          const u = data.user || {};
+          const role = String(u.role || '').trim();
+          const target = role === 'Admin' ? 'admin.php'
+                        : role === 'OPMDC Head' ? 'head-dashboard.php'
+                        : role === 'OPMDC Staff' ? 'staff-dashboard.php'
+                        : role === 'Barangay Official' ? 'barangay-dashboard.php'
+                        : '';
+
+          if (!target) {
+            alert('Unsupported role.');
+            return;
+          }
+
+          const user = {
+            id: u.id,
+            username: u.username,
+            email: u.email,
+            name: u.name || deriveNameFromCredential(raw),
+            role,
+            barangayName: u.barangayName || (role === 'Barangay Official' ? deriveBarangayFromCredential(raw) : null)
+          };
+          try { localStorage.setItem('loggedInUser', JSON.stringify(user)); } catch (e) {}
+
+          window.location.href = target;
+        } catch (err) {
+          alert('Server error. Please try again.');
         }
       });
     });

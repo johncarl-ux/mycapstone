@@ -1,12 +1,7 @@
 <?php
 // staff_create_account.php
-// Only OPMDC Staff or Head can create accounts for others
-session_start();
-if (!isset($_SESSION['user']) || !in_array($_SESSION['user']['role'], ['OPMDC Staff','OPMDC Head','Admin'])) {
-    http_response_code(403);
-    echo json_encode(['success'=>false,'message'=>'Unauthorized']);
-    exit;
-}
+// Open access endpoint per requirements (no session auth). Creates Barangay Official with approved status.
+header('Content-Type: application/json');
 
 $mysqli = require __DIR__ . '/db.php';
 

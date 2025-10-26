@@ -126,7 +126,7 @@
     <aside class="sidebar w-64 bg-gray-800 text-white flex flex-col" aria-hidden="false" data-reveal="sidebar">
       <div class="p-6 text-center border-b border-gray-700">
     <img src="assets/image1.png" alt="Mabini Seal" class="logo-formal">
-        <h2 class="text-xl font-semibold">OPMDC Staff</h2>
+    <h2 id="sidebar-role-title" class="text-xl font-semibold">OPMDC Staff</h2>
         <p class="text-xs text-gray-400">Mabini, Batangas</p>
       </div>
       <nav class="flex-grow px-4 py-6">
@@ -184,8 +184,8 @@
                         <div class="flex items-center">
                             <img class="w-10 h-10 rounded-full" src="https://placehold.co/100x100/E2E8F0/4A5568?text=Staff" alt="User Avatar">
                             <div class="ml-3">
-                                <p class="text-sm font-semibold text-gray-800">OPMDC Staff</p>
-                                <p class="text-xs text-gray-500">Staff</p>
+                                <p id="header-user-name" class="text-sm font-semibold text-gray-800">OPMDC Staff</p>
+                                <p id="header-user-role" class="text-xs text-gray-500">Staff</p>
                             </div>
                         </div>
           </div>
@@ -507,8 +507,85 @@
         </div>
     </div>
 
+    <!-- Edit Barangay Account Modal -->
+    <div id="editAccountModal" class="fixed inset-0 z-50 items-center justify-center hidden transition-all duration-300 opacity-0">
+        <div class="modal-backdrop fixed inset-0 bg-black bg-opacity-50"></div>
+        <div class="bg-white rounded-lg shadow-xl m-auto p-8 w-full max-w-md z-10 modal-enter">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Edit Barangay Account</h2>
+                <button id="closeEditAccountModalBtn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+            </div>
+            <form id="editBarangayAccountForm">
+                <input type="hidden" id="editUserId">
+                <div class="mb-4">
+                    <label for="editBarangayName" class="block text-gray-700 text-sm font-bold mb-2">Barangay:</label>
+                    <select id="editBarangayName" name="barangayName" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                        <option value="Anilao East">Anilao East</option>
+                        <option value="Anilao Proper">Anilao Proper</option>
+                        <option value="Bagalangit">Bagalangit</option>
+                        <option value="Bulacan">Bulacan</option>
+                        <option value="Calamias">Calamias</option>
+                        <option value="Estrella">Estrella</option>
+                        <option value="Gasang">Gasang</option>
+                        <option value="Laurel">Laurel</option>
+                        <option value="Ligaya">Ligaya</option>
+                        <option value="Mainaga">Mainaga</option>
+                        <option value="Mainit">Mainit</option>
+                        <option value="Majuben">Majuben</option>
+                        <option value="Malimatoc I">Malimatoc I</option>
+                        <option value="Malimatoc II">Malimatoc II</option>
+                        <option value="Nag-Iba">Nag-Iba</option>
+                        <option value="Pilahan">Pilahan</option>
+                        <option value="Poblacion">Poblacion</option>
+                        <option value="Pulang Lupa">Pulang Lupa</option>
+                        <option value="Pulong Anahao">Pulong Anahao</option>
+                        <option value="Pulong Balibaguhan">Pulong Balibaguhan</option>
+                        <option value="Pulong Niogan">Pulong Niogan</option>
+                        <option value="Saguing">Saguing</option>
+                        <option value="Sampaguita">Sampaguita</option>
+                        <option value="San Francisco">San Francisco</option>
+                        <option value="San Jose">San Jose</option>
+                        <option value="San Juan">San Juan</option>
+                        <option value="San Teodoro">San Teodoro</option>
+                        <option value="Santa Ana">Santa Ana</option>
+                        <option value="Santa Mesa">Santa Mesa</option>
+                        <option value="Santo Niño">Santo Niño</option>
+                        <option value="Santo Tomas">Santo Tomas</option>
+                        <option value="Solo">Solo</option>
+                        <option value="Talaga East">Talaga East</option>
+                        <option value="Talaga Proper">Talaga Proper</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="editRepresentative" class="block text-gray-700 text-sm font-bold mb-2">Representative Name:</label>
+                    <input type="text" id="editRepresentative" name="name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                <div class="mb-4">
+                    <label for="editEmail" class="block text-gray-700 text-sm font-bold mb-2">Email:</label>
+                    <input type="email" id="editEmail" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                <div class="mb-6">
+                    <label for="editPassword" class="block text-gray-700 text-sm font-bold mb-2">Password (leave blank to keep):</label>
+                    <input type="password" id="editPassword" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+                <div class="flex items-center justify-end mt-6">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+    // Route guard: ensure only OPMDC Staff role lands here
+    try {
+        const u = JSON.parse(localStorage.getItem('loggedInUser'));
+        if (!u || !u.role) throw new Error('no user');
+        const r = String(u.role);
+        if (/admin/i.test(r)) return (window.location.href = 'admin.php');
+        if (/head/i.test(r)) return (window.location.href = 'head-dashboard.php');
+        if (!/staff/i.test(r)) return (window.location.href = 'barangay-dashboard.php');
+    } catch (e) { /* if no user, default to login */ }
     // --- DOM Elements ---
     const allViews = document.querySelectorAll('.view');
     const mainContentTitle = document.getElementById('main-content-title');
@@ -521,6 +598,21 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- Initial setup ---
     // Load real data from server
     fetchServerData();
+
+    // Populate user info from localStorage when available
+    try {
+        const u = JSON.parse(localStorage.getItem('loggedInUser'));
+        if (u && u.role) {
+            const roleTitle = document.getElementById('sidebar-role-title');
+            if (roleTitle) roleTitle.textContent = u.role;
+        }
+        if (u && (u.name || u.role)) {
+            const nameEl = document.getElementById('header-user-name');
+            const roleEl = document.getElementById('header-user-role');
+            if (nameEl) nameEl.textContent = u.name || 'Staff';
+            if (roleEl) roleEl.textContent = u.role || 'OPMDC Staff';
+        }
+    } catch (e) { /* ignore */ }
     
     // --- Event Listeners ---
     sidebarLinks.forEach(link => {
@@ -688,6 +780,13 @@ function renderDashboardUI() {
     document.getElementById('pending-accounts-stat').textContent = accounts.filter(a => a.status === 'pending').length;
 }
 
+// Small HTML escaper available globally (used by multiple renderers)
+function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, function(c){
+        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+    });
+}
+
 async function renderAccountsTable() {
     const tableBody = document.getElementById('accounts-table-body');
     if (!tableBody) return;
@@ -706,6 +805,9 @@ async function renderAccountsTable() {
 
         accounts.forEach((acc, index) => {
             const emailKey = acc.email || acc.username || '';
+            const be = encodeURIComponent(acc.barangayName || '');
+            const re = encodeURIComponent(acc.representative || '');
+            const ee = encodeURIComponent(emailKey);
             const row = `
                 <tr class="border-b ${index % 2 === 1 ? 'even:bg-slate-50' : ''}">
                     <td class="py-4 px-4">${acc.barangayName}</td>
@@ -713,12 +815,8 @@ async function renderAccountsTable() {
                     <td class="py-4 px-4">${emailKey}</td>
                     <td class="py-4 px-4">${getStatusBadge(acc.status)}</td>
                     <td class="py-4 px-4">
-                        ${acc.status === 'pending' ? `
-                            <button class="action-btn btn-approve" onclick="updateAccountStatus(${acc.id}, 'approved')">Approve</button>
-                            <button class="action-btn btn-decline" onclick="updateAccountStatus(${acc.id}, 'declined')">Decline</button>
-                        ` : `
-                            <button class="action-btn btn-decline" onclick="deleteAccount(${acc.id})">Delete</button>
-                        `}
+                        <button class="action-btn btn-update" onclick="openEditAccountFromEncoded(${acc.id}, '${be}', '${re}', '${ee}')">Edit</button>
+                        <button class="action-btn btn-decline" onclick="deleteAccount(${acc.id})">Delete</button>
                     </td>
                 </tr>
             `;
@@ -740,8 +838,8 @@ function renderRequestsTable() {
 
     let requests = [];
     if (serverRequests) {
-        // normalize serverRequests to a common shape
-        requests = serverRequests.map(r => ({ id: r.id, barangay: r.barangay, title: r.request_type || r.title || 'Barangay Request', date: r.created_at || r.date || new Date().toISOString(), status: r.status || 'Pending' }));
+        // normalize serverRequests to a common shape (also pass through request_code)
+        requests = serverRequests.map(r => ({ id: r.id, code: r.request_code || null, barangay: r.barangay, title: r.request_type || r.title || 'Barangay Request', date: r.created_at || r.date || new Date().toISOString(), status: r.status || 'Pending' }));
     } else {
         // Normalize local requests to the proposals shape and merge with local proposals
         const mappedLocal = localRequests.map(r => ({ id: r.id, barangay: r.barangay, title: r.requestType || 'Barangay Request', date: r.date || r.date_submitted || new Date().toISOString(), status: r.status || 'Pending', isLocal: true }));
@@ -759,19 +857,21 @@ function renderRequestsTable() {
     // Show top 5 most recent (by date)
     requests.sort((a,b)=> new Date(a.date) - new Date(b.date));
     requests.slice(-5).reverse().forEach((req, index) => {
+        const displayId = req.code || req.id;
         const row = `
             <tr class="border-b ${index % 2 === 1 ? 'even:bg-slate-50' : ''}">
-                <td class="py-4 px-4">${req.id}</td>
+                <td class="py-4 px-4">${escapeHtml(String(displayId))}</td>
                 <td class="py-4 px-4">${req.barangay}</td>
                 <td class="py-4 px-4">${escapeHtml(req.title || (req.requestType || 'Proposal'))}</td>
-                <td class="py-4 px-4">${new Date(req.created_at || req.date).toLocaleDateString()}</td>
+                <td class="py-4 px-4">${new Date(req.date || req.created_at).toLocaleDateString()}</td>
                 <td class="py-4 px-4">${getStatusBadge(req.status)}</td>
                 <td class="py-4 px-4">
-                     <a class="action-btn btn-details" href="list_requests.php?id=${encodeURIComponent(req.id)}">View</a>
                             ${ (String(req.status).toLowerCase() !== 'approved' && String(req.status).toLowerCase() !== 'declined') ? `
                                 <button class="action-btn btn-approve" onclick="confirmUpdateRequestStatus(${req.id}, 'Approved')">Approve</button>
                                 <button class="action-btn btn-decline" onclick="confirmUpdateRequestStatus(${req.id}, 'Declined')">Decline</button>
-                            ` : '' }
+                            ` : `
+                                <button class="action-btn btn-decline" onclick="confirmDeleteRequest(${req.id})">Delete</button>
+                            ` }
                 </td>
             </tr>
         `;
@@ -890,14 +990,17 @@ function showAlert(title, message, callback) {
     };
 }
 
-function showConfirm(title, message, callback) {
+function showConfirm(title, message, callback, confirmLabel = 'Confirm', variant = 'primary') {
     const alertModal = document.getElementById('alertModal');
     document.getElementById('alertModalTitle').textContent = title;
     document.getElementById('alertModalMessage').textContent = message;
     const actions = document.getElementById('alertModalActions');
+    const confirmBtnClasses = variant === 'danger'
+        ? 'bg-red-600 hover:bg-red-700'
+        : 'bg-blue-600 hover:bg-blue-700';
     actions.innerHTML = `
         <button id="confirmCancelBtn" class="mr-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Cancel</button>
-        <button id="confirmOkBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Delete</button>`;
+        <button id="confirmOkBtn" class="${confirmBtnClasses} text-white font-bold py-2 px-4 rounded">${confirmLabel}</button>`;
     openModal('alertModal');
     document.getElementById('confirmOkBtn').onclick = () => { closeModal('alertModal'); if (callback) callback(true); };
     document.getElementById('confirmCancelBtn').onclick = () => { closeModal('alertModal'); if (callback) callback(false); };
@@ -934,8 +1037,53 @@ function deleteAccount(userId) {
         } catch (err) {
             showAlert('Error', 'Server error');
         }
-    });
+    }, 'Delete', 'danger');
 }
+
+// Edit modal helpers
+function openEditAccountFromEncoded(id, bEnc, rEnc, eEnc) {
+    const barangay = decodeURIComponent(bEnc || '');
+    const rep = decodeURIComponent(rEnc || '');
+    const email = decodeURIComponent(eEnc || '');
+    const idInput = document.getElementById('editUserId');
+    const bSel = document.getElementById('editBarangayName');
+    const repInput = document.getElementById('editRepresentative');
+    const emailInput = document.getElementById('editEmail');
+    const passInput = document.getElementById('editPassword');
+    idInput.value = id;
+    repInput.value = rep;
+    emailInput.value = email;
+    passInput.value = '';
+    if (bSel) {
+        bSel.value = barangay || '';
+    }
+    openModal('editAccountModal');
+}
+
+document.getElementById('closeEditAccountModalBtn') && document.getElementById('closeEditAccountModalBtn').addEventListener('click', ()=> closeModal('editAccountModal'));
+document.getElementById('editBarangayAccountForm') && document.getElementById('editBarangayAccountForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const id = document.getElementById('editUserId').value;
+    const barangayName = document.getElementById('editBarangayName').value;
+    const name = document.getElementById('editRepresentative').value;
+    const email = document.getElementById('editEmail').value;
+    const password = document.getElementById('editPassword').value;
+    const params = new URLSearchParams({ user_id: id, barangayName, name, email });
+    if (password && password.trim() !== '') params.append('password', password);
+    try {
+        const res = await fetch('update_barangay_account.php', { method: 'POST', body: params, credentials: 'same-origin' });
+        const d = await res.json();
+        if (d && d.success) {
+            closeModal('editAccountModal');
+            renderAllViews();
+            showAlert('Saved', 'Account updated successfully.');
+            return;
+        }
+        showAlert('Error', (d && d.message) || 'Failed to update account.');
+    } catch (err) {
+        showAlert('Error', 'Server error.');
+    }
+});
 
 function openProposalDetails(proposalId) {
     const proposalDetailModal = document.getElementById('proposalDetailModal');
@@ -1017,7 +1165,27 @@ function confirmUpdateRequestStatus(requestId, newStatus) {
     showConfirm('Confirm Action', `Are you sure you want to mark request ${requestId} as ${newStatus}?`, async (confirmed) => {
         if (!confirmed) return;
         await updateRequestStatus(requestId, newStatus);
-    });
+    }, 'Confirm', 'primary');
+}
+
+// Delete a request (only shown when status is Approved or Declined)
+function confirmDeleteRequest(requestId) {
+    showConfirm('Confirm Deletion', `Do you really want to delete request ${requestId}? This cannot be undone.`, async (confirmed) => {
+        if (!confirmed) return;
+        try {
+            const res = await fetch('delete_request.php', { method: 'POST', body: new URLSearchParams({ id: requestId }), credentials: 'same-origin' });
+            const d = await res.json();
+            if (d && d.success) {
+                if (typeof fetchServerData === 'function') fetchServerData();
+                renderAllViews();
+                showAlert('Deleted', `Request ${requestId} has been deleted.`);
+                return;
+            }
+            showAlert('Error', (d && d.error) || 'Failed to delete request.');
+        } catch (err) {
+            showAlert('Error', 'Server error.');
+        }
+    }, 'Delete', 'danger');
 }
 
 // SSE: subscribe to notifications stream so staff dashboard refreshes when relevant notifications arrive

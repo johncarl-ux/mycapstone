@@ -333,6 +333,16 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
+    // Route guard: ensure only Barangay Official stays on this page
+    try {
+      const u = JSON.parse(localStorage.getItem('loggedInUser'));
+      if (u && u.role) {
+        const r = String(u.role);
+        if (/admin/i.test(r)) return (window.location.href = 'admin.php');
+        if (/head/i.test(r)) return (window.location.href = 'head-dashboard.php');
+        if (/staff/i.test(r)) return (window.location.href = 'staff-dashboard.php');
+      }
+    } catch (e) { /* ignore */ }
         // --- Globals & Element References ---
         const modal = document.getElementById('requestModal');
         const newRequestBtn = document.getElementById('newRequestBtn');
@@ -557,15 +567,17 @@
           const statusBadge = getStatusBadge(req.status);
           const displayId = req.request_code || req.id;
           const created = req.created_at || req.date || new Date().toISOString();
+          const isFinalized = /approved|declined/i.test(String(req.status || ''));
+          const actionsHtml = isFinalized
+            ? `<button class="delete-activity-btn text-red-600 hover:underline" data-id="${String(req.id)}">Delete</button>`
+            : `<span class="text-gray-400 text-xs">—</span>`;
           const row = `
             <tr class="bg-white border-b hover:bg-gray-50">
               <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${escapeHtml(displayId)}</td>
               <td class="px-6 py-4">${escapeHtml(req.request_type || req.requestType || '')}</td>
               <td class="px-6 py-4">${new Date(created).toLocaleDateString()}</td>
               <td class="px-6 py-4">${statusBadge}</td>
-              <td class="px-6 py-4 flex items-center space-x-3">
-                <a class="text-blue-600 hover:underline" href="list_requests.php?id=${encodeURIComponent(req.id)}">View</a>
-              </td>
+              <td class="px-6 py-4 flex items-center space-x-3">${actionsHtml}</td>
             </tr>
           `;
           activityTableBody.innerHTML += row;

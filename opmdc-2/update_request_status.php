@@ -1,7 +1,6 @@
 <?php
 // update_request_status.php - update status of a request and append to history
-// Use session-based auth: only OPMDC Staff and OPMDC Head may update request status.
-session_start();
+// Open access per requirements (no server-side session auth)
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
@@ -9,27 +8,14 @@ header('Access-Control-Allow-Methods: POST, OPTIONS');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
 
-// Basic auth: require logged-in user with allowed role
-$allowedRoles = ['OPMDC Staff', 'OPMDC Head'];
-$sessionUser = $_SESSION['user'] ?? null;
-if (! $sessionUser) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Unauthenticated']);
-    exit;
-}
-if (! in_array($sessionUser['role'] ?? '', $allowedRoles, true)) {
-    http_response_code(403);
-    echo json_encode(['error' => 'Forbidden']);
-    exit;
-}
-
 $mysqli = require __DIR__ . '/db.php';
 
 $id = intval($_POST['id'] ?? 0);
 $newStatus = $_POST['status'] ?? '';
 $note = $mysqli->real_escape_string($_POST['note'] ?? '');
-// Prefer session user as actor; do not trust client-supplied actor
-$actorName = $sessionUser['name'] ?? $sessionUser['username'] ?? ($sessionUser['role'] ?? '');
+// Use provided actor if any; else default to OPMDC Staff (client-controlled UI guards which role can call this)
+$actorParam = trim($_POST['actor'] ?? '');
+$actorName = $actorParam !== '' ? $actorParam : 'OPMDC Staff';
 $actor = $mysqli->real_escape_string($actorName);
 
 if ($id <= 0 || !in_array($newStatus, ['Pending','Approved','Declined'])) {
@@ -88,8 +74,8 @@ try {
     $title = 'Request Update';
     $body = "Request #{$id} status changed to {$newStatus} by {$actor}";
     if ($ins = $mysqli->prepare('INSERT INTO notifications (title, body, target_role, target_user_id, created_by, created_by_role) VALUES (?,?,?,?,?,?)')) {
-        $createdBy = $sessionUser['id'] ?? null;
-        $createdByRole = $sessionUser['role'] ?? null;
+        $createdBy = null;
+        $createdByRole = $actorName;
         $targetRole = null; // prefer targeting specific user id
         $targetUserParam = $targetUserId ? intval($targetUserId) : null;
         $ins->bind_param('sssiis', $title, $body, $targetRole, $targetUserParam, $createdBy, $createdByRole);

@@ -1,15 +1,10 @@
 <?php
-session_start();
+// Open access: allow edit without session auth (per requirement)
+// session_start();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo 'Method not allowed';
-    exit;
-}
-
-if (!isset($_SESSION['user']) || !in_array($_SESSION['user']['role'] ?? '', ['OPMDC Head','Admin'], true)) {
-    http_response_code(403);
-    echo 'Access denied';
     exit;
 }
 
@@ -21,13 +16,13 @@ $barangayName = trim($_POST['barangayName'] ?? '') ?: null;
 $status = $_POST['status'] ?? 'pending';
 
 if ($userId <= 0 || $name === '' || $email === '') {
-    $_SESSION['admin_message'] = 'Invalid input.';
+    if (session_status() === PHP_SESSION_ACTIVE) $_SESSION['admin_message'] = 'Invalid input.';
     header('Location: admin.php');
     exit;
 }
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    $_SESSION['admin_message'] = 'Invalid email.';
+    if (session_status() === PHP_SESSION_ACTIVE) $_SESSION['admin_message'] = 'Invalid email.';
     header('Location: admin.php');
     exit;
 }
@@ -38,13 +33,13 @@ $sql = "UPDATE users SET name = ?, email = ?, role = ?, barangayName = ?, status
 if ($stmt = $mysqli->prepare($sql)) {
     $stmt->bind_param('sssssi', $name, $email, $role, $barangayName, $status, $userId);
     if ($stmt->execute()) {
-        $_SESSION['admin_message'] = 'User updated.';
+        if (session_status() === PHP_SESSION_ACTIVE) $_SESSION['admin_message'] = 'User updated.';
     } else {
-        $_SESSION['admin_message'] = 'Failed to update user.';
+        if (session_status() === PHP_SESSION_ACTIVE) $_SESSION['admin_message'] = 'Failed to update user.';
     }
     $stmt->close();
 } else {
-    $_SESSION['admin_message'] = 'Server error.';
+    if (session_status() === PHP_SESSION_ACTIVE) $_SESSION['admin_message'] = 'Server error.';
 }
 
 $mysqli->close();
