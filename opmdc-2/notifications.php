@@ -25,6 +25,7 @@ $createSql = "CREATE TABLE IF NOT EXISTS notifications (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     body TEXT NOT NULL,
+    request_id BIGINT UNSIGNED DEFAULT NULL,
     target_role VARCHAR(64) DEFAULT NULL,
     target_user_id BIGINT UNSIGNED DEFAULT NULL,
     created_by BIGINT UNSIGNED DEFAULT NULL,
@@ -33,6 +34,8 @@ $createSql = "CREATE TABLE IF NOT EXISTS notifications (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 $mysqli->query($createSql);
+// If notifications table existed before this change, ensure request_id column exists (MySQL 8+ supports IF NOT EXISTS)
+$mysqli->query("ALTER TABLE notifications ADD COLUMN IF NOT EXISTS request_id BIGINT UNSIGNED DEFAULT NULL;");
 
 $method = $_SERVER['REQUEST_METHOD'];
 if ($method === 'GET') {
@@ -45,7 +48,7 @@ if ($method === 'GET') {
     }
 
     $params = [];
-    $sql = "SELECT id, title, body, target_role, target_user_id, created_by, created_by_role, is_read, created_at FROM notifications";
+    $sql = "SELECT id, title, body, request_id, target_role, target_user_id, created_by, created_by_role, is_read, created_at FROM notifications";
     $conds = [];
     if ($role) { $conds[] = "target_role = ?"; $params[] = $role; }
     if ($userId) { $conds[] = "target_user_id = ?"; $params[] = $userId; }
@@ -88,8 +91,10 @@ if ($method === 'POST') {
 
     $createdBy = $_SESSION['user']['id'] ?? null;
     $createdByRole = $_SESSION['user']['role'] ?? null;
-    $stmt = $mysqli->prepare('INSERT INTO notifications (title, body, target_role, target_user_id, created_by, created_by_role) VALUES (?,?,?,?,?,?)');
-    $stmt->bind_param('sssiis', $title, $body, $targetRole, $targetUserId, $createdBy, $createdByRole);
+    $requestId = isset($input['request_id']) ? intval($input['request_id']) : null;
+    $stmt = $mysqli->prepare('INSERT INTO notifications (title, body, request_id, target_role, target_user_id, created_by, created_by_role) VALUES (?,?,?,?,?,?,?)');
+    // types: title(s), body(s), request_id(i), target_role(s), target_user_id(i), created_by(i), created_by_role(s)
+    $stmt->bind_param('ssisiis', $title, $body, $requestId, $targetRole, $targetUserId, $createdBy, $createdByRole);
     if (! $stmt->execute()) {
         http_response_code(500);
         echo json_encode(['error' => 'Insert failed']);

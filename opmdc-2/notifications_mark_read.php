@@ -16,12 +16,16 @@ if (!$id) { http_response_code(400); echo json_encode(['error'=>'id required']);
 // authorize: allow if user is staff/head or if user is creator
 $userId = $_SESSION['user']['id'] ?? 0;
 $userRole = $_SESSION['user']['role'] ?? '';
-$check = $mysqli->prepare('SELECT created_by FROM notifications WHERE id = ?');
+// authorize: allow if user is staff/head/admin, the creator, the target user, or the target role matches the user's role
+$check = $mysqli->prepare('SELECT created_by, target_user_id, target_role FROM notifications WHERE id = ?');
 $check->bind_param('i', $id);
 $check->execute();
 $res = $check->get_result()->fetch_assoc();
-$createdBy = $res['created_by'] ?? 0;
-if (!in_array($userRole, ['OPMDC Staff','OPMDC Head','Admin']) && intval($createdBy) !== intval($userId)) {
+$createdBy = isset($res['created_by']) ? intval($res['created_by']) : 0;
+$targetUser = isset($res['target_user_id']) ? intval($res['target_user_id']) : 0;
+$targetRole = isset($res['target_role']) ? $res['target_role'] : null;
+
+if (!in_array($userRole, ['OPMDC Staff','OPMDC Head','Admin']) && intval($createdBy) !== intval($userId) && intval($targetUser) !== intval($userId) && !($targetRole && $targetRole === $userRole)) {
     http_response_code(403); echo json_encode(['error'=>'Forbidden']); exit;
 }
 

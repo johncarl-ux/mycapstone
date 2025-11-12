@@ -39,7 +39,7 @@ flush();
 // Main loop: poll DB every 2 seconds for new notifications
 while (true) {
     // Build query: notifications targeted to role OR user id, and id > lastId
-    $sql = "SELECT id, title, body, target_role, target_user_id, created_by, created_by_role, is_read, created_at FROM notifications WHERE id > ? AND (";
+    $sql = "SELECT id, title, body, request_id, target_role, target_user_id, created_by, created_by_role, is_read, created_at FROM notifications WHERE id > ? AND (";
     $params = [$lastId];
     $conds = [];
     if ($role) { $conds[] = "target_role = ?"; $params[] = $role; }

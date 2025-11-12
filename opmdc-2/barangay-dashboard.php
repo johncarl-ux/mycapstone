@@ -61,6 +61,15 @@
     .timeline-dot-declined { background-color: #fc8181; } /* red-400 */
     .timeline-dot-default { background-color: #cbd5e0; } /* gray-400 */
 
+  /* Horizontal stepper (tracker) styles */
+  .stepper { display:flex; align-items:center; gap:1rem; width:100%; }
+  .stepper-line { height:4px; background:#e5e7eb; flex:1; position:relative; }
+  .step { display:flex; flex-direction:column; align-items:center; width:120px; text-align:center; }
+  .step .circle { width:18px; height:18px; border-radius:9999px; background:#cbd5e0; display:flex; align-items:center; justify-content:center; color:#fff; }
+  .step.active .circle { background:#0ea5e9; }
+  .step-label { font-size:13px; color:#6b7280; margin-top:8px; }
+  .step.active .step-label { color:#111827; font-weight:600; }
+
     /* Active nav link style */
     .nav-active {
         background-color: #1f2937; /* bg-gray-900 */
@@ -83,6 +92,13 @@
     .notif-item { display: flex; gap: 0.75rem; padding: 0.5rem; align-items: start; }
     .notif-item .time { font-size: 11px; color: #6b7280; }
     .notif-empty { padding: 1rem; color: #6b7280; }
+  /* Toast notifications (small popups) */
+  .notif-toast-container { position: fixed; right: 1rem; bottom: 1rem; z-index: 60; display:flex; flex-direction:column; gap:0.5rem; }
+  .notif-toast { background: white; border-radius: 0.5rem; box-shadow: 0 6px 18px rgba(0,0,0,0.12); padding: 0.75rem 1rem; width: 320px; cursor: pointer; transition: transform 0.15s ease, opacity 0.2s ease; }
+  .notif-toast:hover { transform: translateY(-4px); }
+  .notif-toast__title { font-weight: 600; color: #1F2937; }
+  .notif-toast__body { font-size: 0.85rem; color: #4B5563; margin-top: 0.25rem; }
+  .notif-toast--new { border-left: 4px solid #3B82F6; }
     /* reveal CSS moved to assets/ui-animations.css */
   </style>
   <link rel="stylesheet" href="assets/ui-animations.css">
@@ -178,9 +194,11 @@
                         <h2 class="text-3xl font-bold text-gray-800">What's up, <span id="welcome-name">Barangay Name</span>!</h2>
                         <p class="text-gray-600">Here's a look at the latest reports and activities.</p>
                     </div>
-                    <button id="newRequestBtn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition duration-300 flex items-center">
-                        <i class="fas fa-plus-circle mr-2"></i> New Request
-                    </button>
+                    <div>
+                      <button id="newProjectProposalBtn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-green-700 transition duration-300 flex items-center">
+                          <i class="fas fa-file-circle-plus mr-2"></i> Submit Project Proposal
+                      </button>
+                    </div>
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -247,12 +265,17 @@
                     <h2 class="text-2xl font-bold text-gray-800 mb-2">Request Status Tracker</h2>
                     <p class="text-gray-600 mb-6">Enter a Request ID to see the current status and history of your request.</p>
                     
-                    <div class="flex flex-col sm:flex-row sm:space-x-4">
-                        <input type="text" id="tracking-id-input" placeholder="Enter your Request ID" class="flex-grow px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3 sm:mb-0">
-                        <button id="track-btn" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-blue-700 transition duration-300">
-                            Track
-                        </button>
-                    </div>
+          <div class="flex flex-col sm:flex-row sm:space-x-4">
+            <input type="text" id="tracking-id-input" placeholder="Enter your Request ID" class="flex-grow px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3 sm:mb-0">
+            <div class="flex items-center space-x-2">
+              <button id="track-btn" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-blue-700 transition duration-300">
+                Track
+              </button>
+              <button id="trackAllBtn" class="bg-gray-700 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-gray-800 transition duration-300 text-sm" title="Track all requests for your barangay">
+                Track barangay
+              </button>
+            </div>
+          </div>
                     
                     <div id="tracking-results-container" class="mt-8 border-t pt-6">
                        <p class="text-center text-gray-500">Tracking details will appear here.</p>
@@ -290,10 +313,11 @@
                       <label for="requestType" class="block text-gray-700 text-sm font-bold mb-2">Request Type:</label>
                       <select id="requestType" name="requestType" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
                           <option value="">Select a type</option>
-                          <option value="Barangay Clearance">Barangay Clearance</option>
-                          <option value="Certificate of Residency">Certificate of Residency</option>
-                          <option value="Incident Report">Incident Report</option>
-                          <option value="Community Assistance">Community Assistance</option>
+                          <option value="Infrastructure">Infrastructure</option>
+                          <option value="Health">Health</option>
+                          <option value="Livelihood">Livelihood</option>
+                          <option value="Security">Security</option>
+                          <option value="Disaster">Disaster</option>
                       </select>
                   </div>
                   <div>
@@ -343,13 +367,9 @@
         if (/staff/i.test(r)) return (window.location.href = 'staff-dashboard.php');
       }
     } catch (e) { /* ignore */ }
-        // --- Globals & Element References ---
-        const modal = document.getElementById('requestModal');
-        const newRequestBtn = document.getElementById('newRequestBtn');
-        const closeModalBtn = document.getElementById('closeModalBtn');
-        const cancelModalBtn = document.getElementById('cancelModalBtn');
-        const requestForm = document.getElementById('requestForm');
-        const activityTableBody = document.getElementById('activity-table-body');
+  // --- Globals & Element References ---
+  const newProjectProposalBtn = document.getElementById('newProjectProposalBtn');
+  const activityTableBody = document.getElementById('activity-table-body');
         
   // View related elements
   const dashboardView = document.getElementById('dashboard-view');
@@ -365,6 +385,7 @@
         const trackBtn = document.getElementById('track-btn');
         const trackingInput = document.getElementById('tracking-id-input');
         const trackingResultsContainer = document.getElementById('tracking-results-container');
+  const trackAllBtn = document.getElementById('trackAllBtn');
         
   let loggedInUser;
   let currentUserBarangay;
@@ -393,18 +414,17 @@
       setInterval(updateTime, 60000);
     }
 
-        // --- Event Listeners ---
-        newRequestBtn.addEventListener('click', () => modal.style.display = 'flex');
-        closeModalBtn.addEventListener('click', () => modal.style.display = 'none');
-        cancelModalBtn.addEventListener('click', () => modal.style.display = 'none');
-        window.addEventListener('click', (event) => {
-            if (event.target.classList.contains('modal-backdrop')) {
-                modal.style.display = 'none';
-            }
-        });
-
-        requestForm.addEventListener('submit', handleFormSubmission);
+    // --- Event Listeners ---
+  // Open project proposal page (merged form) -> new barangay submit page with Smart Recommendations
+  if (newProjectProposalBtn) newProjectProposalBtn.addEventListener('click', () => window.location.href = 'barangay-submit-proposal.php');
         trackBtn.addEventListener('click', handleTracking);
+        trackAllBtn && trackAllBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          // Navigate to aggregated tracker page for this barangay
+          const b = encodeURIComponent(currentUserBarangay || '');
+          if (!b) return alert('Barangay not available');
+          window.location.href = `request_tracker.php?barangay=${b}`;
+        });
         
   // Navigation listeners
   navDashboard.addEventListener('click', (e) => { e.preventDefault(); showView('dashboard'); });
@@ -446,50 +466,7 @@
         }
 
         // --- Core Functions ---
-    function handleFormSubmission(e) {
-      e.preventDefault();
-      const attachmentInput = document.getElementById('attachment');
-      // prepare form data and submit to server
-      const newRequest = {
-        barangay: currentUserBarangay,
-        requestType: document.getElementById('requestType').value,
-        urgency: document.getElementById('urgencyLevel').value,
-        location: document.getElementById('location').value,
-        description: document.getElementById('description').value,
-      };
-      requestForm.reset();
-      modal.style.display = 'none';
-
-      // send to server using FormData (handles file upload)
-      const formData = new FormData();
-      formData.append('barangay', newRequest.barangay);
-      formData.append('requestType', newRequest.requestType);
-      formData.append('urgency', newRequest.urgency);
-      formData.append('location', newRequest.location);
-  formData.append('description', newRequest.description);
-      if (attachmentInput.files.length > 0) formData.append('attachment', attachmentInput.files[0]);
-
-      (async () => {
-        try {
-          const res = await fetch('submit_request.php', { method: 'POST', body: formData });
-          if (!res.ok) throw new Error('Network response was not ok');
-          const data = await res.json();
-          if (data && data.request) {
-            // refresh server-backed requests so UI shows canonical data (request_code etc)
-            await fetchAndCacheRequests();
-            renderUI();
-          } else if (data && data.id) {
-            await fetchAndCacheRequests();
-            renderUI();
-          }
-
-        } catch (err) {
-          console.error('submit_request failed', err);
-          // leave the temp entry in localStorage so user can retry later; optionally mark as failed
-          alert('Failed to submit request to server. Your request is saved locally and will remain visible.');
-        }
-      })();
-    }
+    // Form submission moved to a separate page (new_request.php). The dashboard will reload and pick up changes.
 
   async function handleTracking() {
             const requestId = trackingInput.value.trim();
@@ -568,9 +545,12 @@
           const displayId = req.request_code || req.id;
           const created = req.created_at || req.date || new Date().toISOString();
           const isFinalized = /approved|declined/i.test(String(req.status || ''));
-          const actionsHtml = isFinalized
-            ? `<button class="delete-activity-btn text-red-600 hover:underline" data-id="${String(req.id)}">Delete</button>`
-            : `<span class="text-gray-400 text-xs">—</span>`;
+          const actionsHtml = `
+            <div class="flex items-center space-x-2">
+              <button class="track-btn bg-blue-600 text-white text-xs px-3 py-1 rounded" data-id="${String(req.id)}">Track</button>
+              ${isFinalized ? `<button class="delete-activity-btn text-red-600 text-xs px-3 py-1 rounded border" data-id="${String(req.id)}">Delete</button>` : `<button class="delete-activity-btn text-red-600 text-xs px-3 py-1 rounded border hidden" data-id="${String(req.id)}">Delete</button>`}
+            </div>
+          `;
           const row = `
             <tr class="bg-white border-b hover:bg-gray-50">
               <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${escapeHtml(displayId)}</td>
@@ -696,12 +676,21 @@
         // Initial call
         initializeDashboard();
 
-    // delegate delete clicks for activity table
+    // delegate clicks for activity table (delete & track)
     activityTableBody.addEventListener('click', function (e) {
-      const btn = e.target.closest('.delete-activity-btn');
-      if (!btn) return;
-      const id = btn.getAttribute('data-id');
-      deleteActivityById(id);
+      const delBtn = e.target.closest('.delete-activity-btn');
+      if (delBtn) {
+        const id = delBtn.getAttribute('data-id');
+        deleteActivityById(id);
+        return;
+      }
+      const trkBtn = e.target.closest('.track-btn');
+      if (trkBtn) {
+        const id = trkBtn.getAttribute('data-id');
+        // Navigate to the standalone tracker page
+        window.location.href = `request_tracker.php?id=${encodeURIComponent(id)}`;
+        return;
+      }
     });
 
     // --- Notification System (Realtime via SSE) ---
@@ -743,6 +732,8 @@
               saveNotifications(notes);
             }
             renderNotifications();
+            // show a small toast for incoming notification
+            try { showBarangayNotificationToast(title, body, { requestId: data.request_id }); } catch (err) { console.warn('toast failed', err); }
           } catch (err) {
             console.error('Invalid SSE payload', err);
           }
@@ -865,6 +856,37 @@
       renderNotifications();
     }
 
+    // helper: small visual toast for incoming notifications (barangay)
+    function showBarangayNotificationToast(title, body, opts = {}) {
+      try {
+        const containerId = 'notifToastContainerBarangay';
+        let container = document.getElementById(containerId);
+        if (!container) {
+          container = document.createElement('div');
+          container.id = containerId;
+          container.className = 'notif-toast-container';
+          document.body.appendChild(container);
+        }
+        const toast = document.createElement('div');
+        toast.className = 'notif-toast notif-toast--new';
+        toast.innerHTML = `<div class="notif-toast__title">${escapeHtml(title || 'Notification')}</div><div class="notif-toast__body">${escapeHtml(body || '')}</div>`;
+        toast.onclick = () => {
+          const rid = opts.requestId || opts.request_id || toast.getAttribute('data-request-id');
+          if (rid) {
+            try { window.location.href = `request_tracker.php?id=${encodeURIComponent(rid)}`; } catch(e) { console.warn('jump error', e); }
+          }
+          const dd = document.getElementById('notificationDropdown');
+          if (dd) { dd.classList.remove('hidden'); }
+          if (typeof renderNotifications === 'function') renderNotifications();
+          const bell = document.getElementById('notifBellBtn'); if (bell) bell.focus();
+          toast.remove();
+        };
+        if (opts.requestId) toast.setAttribute('data-request-id', String(opts.requestId));
+        container.appendChild(toast);
+        setTimeout(() => { try { toast.style.opacity = '0'; setTimeout(()=> toast.remove(), 250); } catch(e){} }, opts.duration || 6000);
+      } catch (e) { console.warn('Toast error', e); }
+    }
+
     // Simple XSS-safe text escaper
     function escapeHtml(str) {
       return String(str).replace(/[&<>\"']/g, function (s) {
@@ -892,12 +914,64 @@
 
     markAllReadBtn.addEventListener('click', () => markAllRead());
 
+    
+
     // Initial render of notifications
     renderNotifications();
   // Start realtime stream
   startSSE();
+    
+    // Poll server every 10s for notifications (AJAX fallback / supplement to SSE).
+    async function pollServerNotifications() {
+      try {
+        const res = await fetch('notifications.php', { credentials: 'same-origin' });
+        if (!res.ok) throw new Error('Network');
+        const data = await res.json();
+        if (!data || !Array.isArray(data.notifications)) return;
+        // Merge server notifications into local storage list while preserving read state when possible
+        const local = loadNotifications();
+        const localById = Object.fromEntries(local.map(n=>[n.id, n]));
+        let changed = false;
+        for (const s of data.notifications) {
+          const sid = Number(s.id);
+          if (!sid) continue;
+          const existing = localById[sid];
+          const noteObj = {
+            id: sid,
+            title: s.title || '',
+            body: s.body || '',
+            time: s.created_at || new Date().toISOString(),
+            read: (s.is_read == 1)
+          };
+          if (existing) {
+            // preserve local read flag if it was already read locally
+            noteObj.read = existing.read || noteObj.read;
+            // update if content changed
+            if (existing.title !== noteObj.title || existing.body !== noteObj.body || existing.time !== noteObj.time || existing.read !== noteObj.read) {
+              const idx = local.findIndex(n=>n.id===sid);
+              if (idx!==-1) { local[idx] = noteObj; changed = true; }
+            }
+          } else {
+            // new notification
+            local.push(noteObj); changed = true;
+          }
+        }
+        if (changed) { saveNotifications(local); renderNotifications(); }
+      } catch (err) {
+        // network errors are acceptable; SSE provides realtime when available
+        // console.warn('pollServerNotifications failed', err);
+      }
+    }
+
+    
+    // initial poll and interval
+    pollServerNotifications();
+    setInterval(pollServerNotifications, 10000);
     });
   </script>                            
+
+<!-- Toast container for barangay (created dynamically if missing) -->
+<div id="notifToastContainerBarangay" class="notif-toast-container" aria-live="polite"></div>
 
 </body>
 </html> 

@@ -77,18 +77,18 @@ try {
     $notifBody = "{$requestType} submitted by {$barangay} ({$email})";
 
     // prepare insert (if notifications table exists)
-    if ($ins = $mysqli->prepare("INSERT INTO notifications (title, body, target_role, created_by_role, created_by) VALUES (?, ?, ?, ?, ?)") ) {
+    if ($ins = $mysqli->prepare("INSERT INTO notifications (title, body, request_id, target_role, created_by_role, created_by) VALUES (?, ?, ?, ?, ?, ?)") ) {
         $createdByRole = 'Barangay Official';
         $createdById = 0; // unknown/anonymous in this context
 
         // Insert for OPMDC Staff
         $targetRole = 'OPMDC Staff';
-        $ins->bind_param('ssssi', $notifTitle, $notifBody, $targetRole, $createdByRole, $createdById);
+    $ins->bind_param('ssissi', $notifTitle, $notifBody, $newId, $targetRole, $createdByRole, $createdById);
         @$ins->execute();
 
         // Insert for OPMDC Head
         $targetRole = 'OPMDC Head';
-        $ins->bind_param('ssssi', $notifTitle, $notifBody, $targetRole, $createdByRole, $createdById);
+    $ins->bind_param('ssissi', $notifTitle, $notifBody, $newId, $targetRole, $createdByRole, $createdById);
         @$ins->execute();
 
         $ins->close();

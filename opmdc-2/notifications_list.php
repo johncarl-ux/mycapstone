@@ -23,7 +23,7 @@ $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 50;
 $sinceId = isset($_GET['since_id']) ? intval($_GET['since_id']) : 0;
 
 $params = [];
-$sql = "SELECT id, title, body, target_role, target_user_id, created_by, created_by_role, is_read, created_at FROM notifications";
+$sql = "SELECT id, title, body, request_id, target_role, target_user_id, created_by, created_by_role, is_read, created_at FROM notifications";
 $conds = [];
 if ($role) { $conds[] = "target_role = ?"; $params[] = $role; }
 if ($userId) { $conds[] = "target_user_id = ?"; $params[] = $userId; }
