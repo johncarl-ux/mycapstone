@@ -53,7 +53,7 @@ This project includes a small notification system used by the dashboards (barang
 
 How it works (quick)
 
-1. Client posts a new notification to `notifications.php` (e.g., the Barangay dashboard posts when a request is submitted). The endpoint inserts into the DB and returns the inserted `id`.
+1. Client posts a new notification to `notifications.php` (e.g., the Barangay dashboard posts when a proposal is submitted). The endpoint inserts into the DB and returns the inserted `id`.
 2. `notifications_stream.php` polls for new rows and emits SSE `notification` events to connected, authenticated clients.
 3. Dashboards open an EventSource to `notifications_stream.php` and refresh or append notifications when events arrive. They can also call `notifications_list.php` to fetch a recent list and unread count.
 
@@ -61,7 +61,7 @@ Testing realtime notifications
 
 1. Ensure Apache/PHP is running and you have a logged-in session in the browser (login via `login.html`).
 2. Open the target dashboard(s): `barangay-dashboard.php`, `staff-dashboard.php`, `head-dashboard.php`.
-3. Submit a new request from the barangay dashboard. Check the Network tab for the POST to `notifications.php` (should return JSON with `id`).
+3. Submit a new proposal from the barangay dashboard. Check the Network tab for the POST to `notifications.php` (should return JSON with `id`).
 4. Other dashboards (staff/head) should receive the notification without manual refresh; if not, check the browser console and Apache error logs.
 
 Troubleshooting

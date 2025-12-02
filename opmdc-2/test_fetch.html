@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>Testing API Endpoints</h1>
+    <button onclick="testListBarangay()">Test list_barangay_accounts.php</button>
+    <button onclick="testListProposals()">Test list_staff_proposals.php</button>
+    <button onclick="testDashboardCounts()">Test dashboard_counts.php</button>
+    <pre id="output"></pre>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        async function testListBarangay() {
+            output.textContent = 'Testing list_barangay_accounts.php...\n';
+            try {
+                const res = await fetch('list_barangay_accounts.php', { credentials: 'same-origin' });
+                output.textContent += 'Status: ' + res.status + '\n';
+                output.textContent += 'Headers: ' + res.headers.get('content-type') + '\n';
+                const text = await res.text();
+                output.textContent += 'Raw response:\n' + text + '\n\n';
+                try {
+                    const json = JSON.parse(text);
+                    output.textContent += 'Parsed JSON:\n' + JSON.stringify(json, null, 2);
+                } catch (e) {
+                    output.textContent += 'JSON parse error: ' + e.message;
+                }
+            } catch (e) {
+                output.textContent += 'Fetch error: ' + e.message;
+            }
+        }
+        
+        async function testListProposals() {
+            output.textContent = 'Testing api/list_staff_proposals.php...\n';
+            try {
+                const res = await fetch('api/list_staff_proposals.php', { credentials: 'same-origin' });
+                output.textContent += 'Status: ' + res.status + '\n';
+                const text = await res.text();
+                output.textContent += 'Raw response:\n' + text + '\n\n';
+                try {
+                    const json = JSON.parse(text);
+                    output.textContent += 'Parsed JSON:\n' + JSON.stringify(json, null, 2);
+                } catch (e) {
+                    output.textContent += 'JSON parse error: ' + e.message;
+                }
+            } catch (e) {
+                output.textContent += 'Fetch error: ' + e.message;
+            }
+        }
+        
+        async function testDashboardCounts() {
+            output.textContent = 'Testing dashboard_counts.php...\n';
+            try {
+                const res = await fetch('dashboard_counts.php', { credentials: 'same-origin' });
+                output.textContent += 'Status: ' + res.status + '\n';
+                const text = await res.text();
+                output.textContent += 'Raw response:\n' + text + '\n\n';
+                try {
+                    const json = JSON.parse(text);
+                    output.textContent += 'Parsed JSON:\n' + JSON.stringify(json, null, 2);
+                } catch (e) {
+                    output.textContent += 'JSON parse error: ' + e.message;
+                }
+            } catch (e) {
+                output.textContent += 'Fetch error: ' + e.message;
+            }
+        }
+    </script>
+</body>
+</html>

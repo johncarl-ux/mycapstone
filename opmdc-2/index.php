@@ -1,15 +1,4 @@
-<?php
-// Homepage: load announcements from DB
-$mysqli = include __DIR__ . '/db.php';
-$announcements = [];
-$res = $mysqli->query("SELECT id, title, body, created_by, created_at FROM announcements ORDER BY created_at DESC LIMIT 10");
-if ($res) {
-    while ($row = $res->fetch_assoc()) {
-        $announcements[] = $row;
-    }
-    $res->free();
-}
-?>
+<?php /* Announcements removed from public homepage as requested */ ?>
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
@@ -73,36 +62,7 @@ if ($res) {
       </div>
     </section>
 
-    <!-- Announcements section: populated from DB -->
-    <section id="announcements" class="py-12 bg-slate-50">
-      <div class="container mx-auto px-6">
-        <div class="text-center mb-8">
-          <h2 class="text-3xl font-bold text-gray-900">Announcements</h2>
-          <p class="text-gray-600">Latest messages from the Municipal Office and OPMDC staff.</p>
-        </div>
-
-        <div class="max-w-4xl mx-auto space-y-4">
-          <?php if (count($announcements) === 0): ?>
-            <p class="text-center text-gray-500">No announcements at this time.</p>
-          <?php else: ?>
-            <?php foreach ($announcements as $a): ?>
-              <article class="bg-white p-6 rounded-lg shadow-md">
-                <div class="flex justify-between items-start">
-                  <div>
-                    <h3 class="text-xl font-semibold text-gray-900"><?php echo htmlspecialchars($a['title']); ?></h3>
-                    <p class="text-sm text-gray-600 mt-1">by <?php echo htmlspecialchars($a['created_by'] ?? 'Staff'); ?></p>
-                  </div>
-                  <div class="text-xs text-gray-500 text-right">
-                    <?php echo date('M j, Y \a\t g:i A', strtotime($a['created_at'])); ?>
-                  </div>
-                </div>
-                <div class="mt-4 text-gray-700 whitespace-pre-line"><?php echo nl2br(htmlspecialchars($a['body'])); ?></div>
-              </article>
-            <?php endforeach; ?>
-          <?php endif; ?>
-        </div>
-      </div>
-    </section>
+    <!-- Announcements removed -->
 
     <section id="mission" class="py-16 md:py-24 bg-white">
       <div class="container mx-auto px-6 text-center reveal-on-scroll">

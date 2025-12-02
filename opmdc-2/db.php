@@ -19,13 +19,19 @@ if (file_exists(__DIR__ . '/config.db.php')) {
     if (isset($DB_NAME)) $dbName = $DB_NAME;
 }
 
-$mysqli = new mysqli($dbHost, $dbUser, $dbPass, $dbName);
+// Use mysqli_init to set timeouts before connecting (helps avoid long hangs on Windows/XAMPP)
+$mysqli = mysqli_init();
+@mysqli_options($mysqli, MYSQLI_OPT_CONNECT_TIMEOUT, 5); // 5s connect timeout
+// If available, set read timeout as well
+if (defined('MYSQLI_OPT_READ_TIMEOUT')) { @mysqli_options($mysqli, MYSQLI_OPT_READ_TIMEOUT, 8); }
+
+@mysqli_real_connect($mysqli, $dbHost, $dbUser, $dbPass, $dbName);
 
 if ($mysqli->connect_errno) {
-    http_response_code(500);
-    echo 'Failed to connect to database.';
+    // Don't output anything here - let the calling script handle the error
     error_log('DB connection error: ' . $mysqli->connect_error);
-    exit;
+    // Return a failed connection object so callers can check connect_errno
+    return $mysqli;
 }
 
 // Set charset and collation

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Staff Dashboard Fetch</title>
+    <base href="../">
+</head>
+<body>
+    <h1>Testing Fetch with Base Tag</h1>
+    <button onclick="testFetch()">Test Fetch</button>
+    <pre id="output"></pre>
+    
+    <script>
+        async function testFetch() {
+            const output = document.getElementById('output');
+            output.textContent = 'Testing fetch to list_barangay_accounts.php...\n';
+            output.textContent += 'Current URL: ' + window.location.href + '\n';
+            output.textContent += 'Base element: ' + document.querySelector('base').href + '\n\n';
+            
+            try {
+                output.textContent += 'Fetching list_barangay_accounts.php...\n';
+                const res = await fetch('list_barangay_accounts.php', { credentials: 'same-origin' });
+                output.textContent += 'Response status: ' + res.status + '\n';
+                output.textContent += 'Response OK: ' + res.ok + '\n';
+                output.textContent += 'Content-Type: ' + res.headers.get('content-type') + '\n\n';
+                
+                const text = await res.text();
+                output.textContent += 'Raw response text:\n' + text + '\n\n';
+                
+                try {
+                    const data = JSON.parse(text);
+                    output.textContent += 'Parsed JSON successfully:\n' + JSON.stringify(data, null, 2);
+                } catch (parseErr) {
+                    output.textContent += 'JSON parse error: ' + parseErr.message;
+                }
+            } catch (err) {
+                output.textContent += 'Fetch error: ' + err.message + '\n';
+                output.textContent += 'Error stack: ' + err.stack;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - OPMDC Mabini</title>
+  <title>Login - OMPDC Mabini</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
   
@@ -22,8 +22,7 @@
       background-position: center;
       filter: blur(4px);
       transform: scale(1.05);
-      /* Subtle background animation */
-      animation: zoomInBackground 30s infinite alternate;
+      /* Remove continuous animation to improve performance */
     }
 
     /* Keyframes for animations */
@@ -46,7 +45,7 @@
 <body class="bg-gray-900">
 
   <div class="background-container fixed inset-0 z-0"></div>
-  <div class="fixed inset-0 bg-black bg-opacity-50 z-10"></div>
+  <div class="fixed inset-0 bg-black bg-opacity-50 z-10 pointer-events-none"></div>
 
   <main class="relative z-20 flex flex-col min-h-screen p-4">
     
@@ -65,28 +64,23 @@
           <div id="login-card" class="bg-white rounded-xl shadow-2xl p-8 md:p-12 w-full max-w-md animate-fade-in-up" style="animation-delay: 0.2s;">
             
             <div class="text-center animate-fade-in-up" style="animation-delay: 0.3s;">
-                <h1 class="text-3xl font-bold text-gray-800">OPMDC Portal</h1>
+                <h1 class="text-3xl font-bold text-gray-800">OMPDC Portal</h1>
                 <p class="mt-2 text-gray-500">Welcome! Please sign in.</p>
             </div>
             
             <form id="loginForm" class="mt-8 space-y-6" method="post" action="#">
               <div class="animate-fade-in-up" style="animation-delay: 0.4s;">
                 <label for="credential" class="text-sm font-medium text-gray-700">Username or Email</label>
-                <input type="text" id="credential" name="credential" placeholder="Enter your username or email" required class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                <input type="text" id="credential" name="credential" placeholder="Enter your username or email" required autocomplete="username" class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
               </div>
 
               <div class="animate-fade-in-up" style="animation-delay: 0.5s;">
                 <label for="password" class="text-sm font-medium text-gray-700">Password</label>
-                <input type="password" id="password" name="password" placeholder="Enter your password" required class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password" class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
               </div>
-
-              <div class="text-right animate-fade-in-up" style="animation-delay: 0.6s;">
-                <a href="#" class="text-sm font-medium text-blue-600 hover:underline">Forgot Password?</a>
-              </div>
-
               <div class="animate-fade-in-up" style="animation-delay: 0.7s;">
                 <button id="submit-button" type="submit" class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                  Sign in
+                  <span class="btn-label">Sign in</span>
                 </button>
               </div>
             </form>
@@ -94,7 +88,7 @@
             </div>
           
           <div class="hidden lg:flex flex-col items-center justify-center text-center animate-fade-in-up" style="animation-delay: 0.4s;">
-            <img src="assets/image1.png" alt="Bayan ng Mabini, Lalawigan ng Batangas" class="w-80 h-80">
+            <img src="assets/image3.png" alt="Bayan ng Mabini, Lalawigan ng Batangas" class="w-80 h-80">
             <h2 class="mt-6 text-4xl font-bold text-white tracking-wide [text-shadow:2px_2px_4px_rgba(0,0,0,0.5)]">
               BAYAN NG MABINI
             </h2>
@@ -102,12 +96,46 @@
               LALAWIGAN NG BATANGAS
             </p>
           </div>
+    
   <script>
     // Client-only routing with user data persisted in localStorage
     document.addEventListener('DOMContentLoaded', () => {
+      // Ensure any stale client state from previous sessions is cleared when hitting the login page
+      try {
+        const toClearKeys = [
+          'loggedInUser',
+          'opmdcNewSubmissions_Staff',
+          'opmdcNewSubmissions_Head',
+          'opmdcDashboardCounts'
+        ];
+        toClearKeys.forEach(k => localStorage.removeItem(k));
+        // Also clear any temp caches used by dashboards
+        if (window.sessionStorage) {
+          ['_serverRequests','_serverProposals','_serverAccounts','_dashboardCounts'].forEach(k => sessionStorage.removeItem(k));
+        }
+      } catch (e) { /* ignore */ }
+
       const form = document.getElementById('loginForm');
       const credInput = document.getElementById('credential');
       const passInput = document.getElementById('password');
+      const submitBtn = document.getElementById('submit-button');
+      const btnLabel = submitBtn ? submitBtn.querySelector('.btn-label') : null;
+      let isSubmitting = false;
+
+      function setLoading(loading) {
+        isSubmitting = !!loading;
+        if (!submitBtn) return;
+        submitBtn.disabled = isSubmitting;
+        submitBtn.classList.toggle('opacity-60', isSubmitting);
+        submitBtn.classList.toggle('cursor-not-allowed', isSubmitting);
+        if (btnLabel) {
+          if (isSubmitting) {
+            btnLabel.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>Signing in…';
+          } else {
+            btnLabel.textContent = 'Sign in';
+          }
+        }
+      }
 
       function titleCase(s){ return String(s||'').split(/\s+|\.|_|-|@/).filter(Boolean).map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' '); }
       function deriveNameFromCredential(c){
@@ -124,28 +152,56 @@
 
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        if (isSubmitting) return; // Prevent double submits
         const raw = String(credInput.value || '').trim();
         const pwd = String(passInput.value || '').trim();
 
         // Secure server-side authentication (username/email + password)
         try {
-          const resp = await fetch('authenticate.php', {
+          setLoading(true);
+          // Set a timeout to avoid hanging requests
+          const controller = new AbortController();
+          const timeoutMs = 15000; // 15s for slower local servers
+          const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+          // Use the correct API route located under /api
+          const resp = await fetch('api/authenticate.php', {
             method: 'POST',
-            headers: { 'Accept': 'application/json' },
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+            },
+            credentials: 'same-origin',
+            cache: 'no-store',
+            signal: controller.signal,
             body: new URLSearchParams({ credential: raw, password: pwd })
           });
-          const data = await resp.json();
+          // Attempt to parse JSON; if it fails, surface a friendlier error
+          let data;
+          try {
+            data = await resp.json();
+          } catch (_) {
+            throw new Error('Invalid server response');
+          }
+          clearTimeout(timeoutId);
           if (!data || !data.success || !data.user) {
             alert((data && data.message) ? data.message : 'Invalid username or password.');
             return;
           }
 
           const u = data.user || {};
-          const role = String(u.role || '').trim();
-          const target = role === 'Admin' ? 'admin.php'
-                        : role === 'OPMDC Head' ? 'head-dashboard.php'
-                        : role === 'OPMDC Staff' ? 'staff-dashboard.php'
-                        : role === 'Barangay Official' ? 'barangay-dashboard.php'
+          const rawRole = String(u.role || '').trim();
+          // Normalize role into a friendly canonical value (be tolerant of casing/variants)
+          const role = /admin/i.test(rawRole) ? 'Admin'
+                        : /head/i.test(rawRole) ? 'OPMDC Head'
+                        : /staff/i.test(rawRole) ? 'OPMDC Staff'
+                        : /barangay/i.test(rawRole) ? 'Barangay Official'
+                        : rawRole;
+
+          // Redirect to the correct dashboard pages inside their folders (tolerant matching)
+          const target = /admin/i.test(rawRole) ? 'admin/admin.php'
+                        : /head/i.test(rawRole) ? 'head/head-dashboard.php'
+                        : /staff/i.test(rawRole) ? 'staff/staff-dashboard.php'
+                        : /barangay/i.test(rawRole) ? 'barangay/barangay-dashboard.php'
                         : '';
 
           if (!target) {
@@ -161,11 +217,22 @@
             role,
             barangayName: u.barangayName || (role === 'Barangay Official' ? deriveBarangayFromCredential(raw) : null)
           };
-          try { localStorage.setItem('loggedInUser', JSON.stringify(user)); } catch (e) {}
+          try {
+            // Persist new user and explicitly overwrite any prior values
+            localStorage.setItem('loggedInUser', JSON.stringify(user));
+          } catch (e) {}
 
           window.location.href = target;
         } catch (err) {
-          alert('Server error. Please try again.');
+          if (err && (err.name === 'AbortError')) {
+            alert('Server is taking too long to respond. Please try again.');
+          } else if (err && err.message === 'Invalid server response') {
+            alert('Login failed: invalid server response.');
+          } else {
+            alert('Server error. Please try again.');
+          }
+        } finally {
+          setLoading(false);
         }
       });
     });

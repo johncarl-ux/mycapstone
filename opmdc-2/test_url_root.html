@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>URL Resolution Test</title>
+</head>
+<body>
+    <h2>Testing URL without base tag (accessed via root)</h2>
+    <p>Current location: <span id="location"></span></p>
+    <p>Resolved URL for 'list_barangay_accounts.php': <span id="resolved"></span></p>
+    <button onclick="testFetch()">Test Fetch</button>
+    <pre id="output"></pre>
+    
+    <script>
+        document.getElementById('location').textContent = window.location.href;
+        const resolved = new URL('list_barangay_accounts.php', window.location.href);
+        document.getElementById('resolved').textContent = resolved.href;
+        
+        async function testFetch() {
+            const output = document.getElementById('output');
+            try {
+                output.textContent = 'Fetching...\n';
+                const res = await fetch('list_barangay_accounts.php', { credentials: 'same-origin' });
+                output.textContent += 'Status: ' + res.status + '\n';
+                const text = await res.text();
+                output.textContent += text;
+            } catch (err) {
+                output.textContent += 'Error: ' + err.message;
+            }
+        }
+    </script>
+</body>
+</html>
